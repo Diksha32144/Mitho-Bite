@@ -3,12 +3,12 @@ import logo from '../assets/logo.png'; // Make sure you have your logo
 
 export default function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-[#3C2A20] shadow-lg z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-[#7A231E] shadow-lg z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
         {/* Logo and Name */}
         <div className="flex items-center gap-3">
           <img src={logo} alt="Sweet Crumbs Logo" className="h-10 w-10" />
-          <span className="text-2xl font-bold text-white">Sweet Crumbs</span>
+          <span className="text-2xl font-bold text-white">Mitho_Bite</span>
         </div>
 
         {/* Links */}
