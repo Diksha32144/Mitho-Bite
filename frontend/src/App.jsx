@@ -39,13 +39,21 @@ function App() {
 
         {/* This was causing the error because activeCategory wasn't defined */}
         <CategoryBar activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
-      
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* We map filteredProducts so the buttons actually work */}
-          {filteredProducts.map((item) => (
-            <ProductCard key={item.id} item={item} />
-          ))}
-        </div>
+     
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+  {filteredProducts.length > 0 ? (
+    // If there ARE products, show them
+    filteredProducts.map((item) => (
+      <ProductCard key={item.id} item={item} />
+    ))
+  ) : (
+    // If there ARE NO products, show this message
+    <div className="col-span-full text-center py-20">
+      <p className="text-gray-400 text-xl italic">No treats found in this category yet...</p>
+    </div>
+  )}
+</div>
+        
       </section>
 
       <footer className="bg-[#7A231E] text-white py-12 mt-20">

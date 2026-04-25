@@ -1,5 +1,5 @@
 export default function CategoryBar({ activeCategory, setActiveCategory }) {
-  const categories = ['All', 'Cakes', 'Pastries', 'Donuts'];
+  const categories = ['All', 'Cakes', 'Pastries', 'Donuts','Ice-cream','Cookies'];
 
   return (
     <div className="flex justify-center gap-4 mb-12">
