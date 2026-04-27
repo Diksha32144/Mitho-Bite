@@ -3,10 +3,20 @@ import { ShoppingCart } from 'lucide-react';
 export default function ProductCard({ item }) {
   return (
     <div className="group bg-white/70 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-      {/* Product Image Holder */}
+      
+      {/* Product Image Holder - FIXED */}
       <div className="h-52 bg-pink-100/50 rounded-[2rem] overflow-hidden mb-6 flex items-center justify-center relative">
-        <span className="text-pink-300 font-bold uppercase tracking-widest text-xs">Mitho Bite Special</span>
-        {/* Later, you can add <img src={item.image_url} /> here */}
+        {item.image ? (
+          <img 
+            src={item.image} 
+            alt={item.name} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          />
+        ) : (
+          <span className="text-pink-300 font-bold uppercase tracking-widest text-xs">
+            Mitho Bite Special
+          </span>
+        )}
       </div>
 
       {/* Info */}

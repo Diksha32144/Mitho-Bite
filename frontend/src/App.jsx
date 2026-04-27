@@ -6,13 +6,61 @@ import wavyBG from './assets/landing-bg.png';
 import ProductCard from './components/ProductCard';
 import CategoryBar from './components/CategoryBar';
 
+import cake1 from './assets/choco-cake.png';
+import cake2 from './assets/red-velvet.png';
+import cake3 from './assets/blueberry.png';
+import pastry1 from './assets/strawberry pastry.png';
+import pastry2 from './assets/blackforest.png';
+import pastry3 from './assets/pineapple.png';
+import donut1 from './assets/glazed donut.png';
+import donut2 from './assets/chocolate sprinkles.png';
+import donut3 from './assets/boston.png';
+import icecream1 from './assets/vanilla.png';
+import icecream2 from './assets/chocolate.png';
+import icecream3 from './assets/mango-sorbet.png';
+import cookies1 from './assets/choco cookies.png';
+import cookies2 from './assets/oatmeal.png';
+import cookies3 from './assets/peanut.png';
+
+
+
 function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
 
+  const imageLib = {
+    'Classic Chocolate Cake': cake1,
+    'Red Velvet Dream': cake2,
+    'Blueberry Cheesecake': cake3,
+
+    'Strawberry Pastry': pastry1,
+    'Black Forest Pastry': pastry2,
+    'Pineapple Delight': pastry3,
+
+    'Glazed Classic Donut': donut1,
+    'Chocolate Sprinkles': donut2,
+    'Boston Cream': donut3,
+
+    'Vanilla Bean Scoop': icecream1,
+    'Belgian Chocolate': icecream2,
+    'Mango Sorbet': icecream3,
+
+    'Double Choco Chip': cookies1,
+    'Oatmeal Raisin': cookies2,
+    'Peanut Butter Crunch': cookies3,
+
+  };
+
   useEffect(() => {
     axios.get('http://localhost:8800/api/products')
-      .then(res => setProducts(res.data))
+  .then(res => {
+        // 3. Attach the local image to the database item
+        const dataWithImages = res.data.map(item => ({
+          ...item,
+          image: imageLib[item.name] || 'https://via.placeholder.com/300' 
+        }));
+        setProducts(dataWithImages);
+      })
       .catch(err => console.error(err));
   }, []);
 
