@@ -33,6 +33,8 @@ import cookies3 from './assets/peanut.png';
 function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
+  // NEW: State to control sidebar visibility
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Mapping Library: Links database names to local assets
   const imageLib = {
@@ -81,7 +83,7 @@ function App() {
           backgroundAttachment: 'fixed' 
         }}
       >
-        <Navbar />
+        <Navbar onCartClick={() => setIsCartOpen(true)} />
         <Hero />
       </div>
 
@@ -167,6 +169,9 @@ function App() {
           </div>
         </div>
       </footer>
+      
+      {/* NEW: THE SIDEBAR COMPONENT */}
+      <CartSidebar isOpen={isCartOpen} setIsOpen={setIsCartOpen} />
     </div>
   );
 }

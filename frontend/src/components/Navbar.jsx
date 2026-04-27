@@ -2,7 +2,12 @@ import { ShoppingCart, User, Cake } from 'lucide-react';
 import logo from '../assets/logo.png'; // Make sure you have your logo
 import { useCart } from '../context/CartContext';
 
-export default function Navbar() {
+export default function Navbar({ onCartClick }) {
+  // Access the real cart data
+  const { cart } = useCart();
+
+  // Calculate total number of items in cart
+  const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
   return (
     <nav className="fixed top-0 left-0 right-0 bg-[#7A231E] shadow-lg z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
@@ -19,18 +24,23 @@ export default function Navbar() {
           <a href="#" className="hover:text-rose-400 transition">Reviews</a>
         </div>
 
-        {/* Profile and Cart */}
+      {/* Profile and Cart */}
         <div className="flex items-center gap-6">
           <button className="text-gray-200 hover:text-rose-400 transition">
             <User size={26} />
           </button>
-          <button className="relative p-1">
+
+          {/* Updated Cart Button */}
+          <button onClick={onCartClick} className="relative p-1 hover:scale-110 transition-transform">
             <ShoppingCart size={26} className="text-white" />
-            <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-              1
-            </span>
+            {itemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#7A231E]">
+                {itemCount}
+              </span>
+            )}
           </button>
-          <button className="bg-rose-500 text-white px-5 py-2 rounded-xl font-semibold text-sm hover:bg-rose-600 transition">
+
+          <button className="bg-rose-500 text-white px-5 py-2 rounded-xl font-semibold text-sm hover:bg-rose-600 transition shadow-lg shadow-black/20">
             Sign In
           </button>
         </div>
