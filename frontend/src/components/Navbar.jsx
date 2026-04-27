@@ -1,5 +1,6 @@
 import { ShoppingCart, User, Cake } from 'lucide-react';
 import logo from '../assets/logo.png'; // Make sure you have your logo
+import { useCart } from '../context/CartContext';
 
 export default function Navbar() {
   return (

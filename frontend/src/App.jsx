@@ -8,6 +8,7 @@ import Featured from './components/Featured';
 import CategoryBar from './components/CategoryBar';
 import ProductCard from './components/ProductCard';
 import ServiceFeatures from './components/ServiceFeatures';
+import CartSidebar from './components/CartSidebar';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
