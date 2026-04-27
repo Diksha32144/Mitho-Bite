@@ -5,6 +5,8 @@ import Hero from './components/Hero';
 import wavyBG from './assets/landing-bg.png'; 
 import ProductCard from './components/ProductCard';
 import CategoryBar from './components/CategoryBar';
+import Featured from './components/Featured';
+import ServiceFeatures from './components/ServiceFeatures'
 
 import cake1 from './assets/choco-cake.png';
 import cake2 from './assets/red-velvet.png';
