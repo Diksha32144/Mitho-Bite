@@ -1,10 +1,22 @@
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Check } from 'lucide-react'; // Added Check for feedback
+import { useCart } from '../context/CartContext';
+import { useState } from 'react';
 
 export default function ProductCard({ item }) {
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = () => {
+    addToCart(item);
+    setAdded(true);
+    // Reset the button icon after 1.5 seconds
+    setTimeout(() => setAdded(false), 1500);
+  };
+
   return (
     <div className="group bg-white/70 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
       
-      {/* Product Image Holder - FIXED */}
+      {/* Product Image Holder */}
       <div className="h-52 bg-pink-100/50 rounded-[2rem] overflow-hidden mb-6 flex items-center justify-center relative">
         {item.image ? (
           <img 
@@ -34,8 +46,13 @@ export default function ProductCard({ item }) {
           <span className="text-2xl font-black text-[#7A231E]">Rs. {item.price}</span>
         </div>
         
-        <button className="bg-[#7A231E] text-white p-4 rounded-2xl hover:bg-[#5c1a16] transition-colors shadow-lg shadow-red-200">
-          <ShoppingCart size={20} />
+        <button 
+          onClick={handleAdd}
+          className={`${
+            added ? 'bg-green-600' : 'bg-[#7A231E]'
+          } text-white p-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-red-200 flex items-center justify-center`}
+        >
+          {added ? <Check size={20} /> : <ShoppingCart size={20} />}
         </button>
       </div>
     </div>
