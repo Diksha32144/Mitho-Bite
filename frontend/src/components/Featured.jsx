@@ -1,5 +1,5 @@
 import React from 'react';
-import donutHero from '../assets/donuts-bundle.png'; // Use a high-quality group photo
+import donutHero from '../assets/glazed donut.png';
 
 export default function Featured() {
   return (
