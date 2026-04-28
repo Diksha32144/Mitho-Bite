@@ -11,6 +11,7 @@ import ProductCard from './components/ProductCard';
 import ServiceFeatures from './components/ServiceFeatures';
 import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage'; 
+import ReviewsPage from './pages/ReviewsPage';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
