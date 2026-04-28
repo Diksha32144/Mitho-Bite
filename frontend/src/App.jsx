@@ -128,6 +128,10 @@ function App() {
 
         {/* ROUTE 3: THE PRODUCTS PAGE */}
         <Route path="/products" element={<ProductPage products={products} />} />
+      
+
+      {/* NEW ROUTE FOR REVIEWS */}
+        <Route path="/reviews" element={<ReviewsPage />} />
       </Routes>
 
       {/* Footer stays at the bottom of every page */}
