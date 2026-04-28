@@ -1,49 +1,46 @@
-import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Cake } from 'lucide-react';
-import logo from '../assets/logo.png'; 
+import React from 'react';
+import { Link } from 'react-router-dom'; // 1. Important: Import Link
+import { ShoppingCart, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import logo from '../assets/logo.png'; 
 
-export default function Navbar({ onCartClick }) {
-  // Access the real cart data
+export default function Navbar() {
   const { cart } = useCart();
-
-  // Calculate total number of items in cart
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-[#7A231E] shadow-lg z-50">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-        {/* Logo and Name - Wrapped in Link to go Home */}
-        <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="Mitho Bite Logo" className="h-10 w-10" />
-          <span className="text-2xl font-bold text-white">Mitho_Bite</span>
+    <nav className="fixed top-0 left-0 w-full bg-[#7A231E] text-white z-50 shadow-md py-4 px-8 flex items-center justify-between">
+      
+      {/* LEFT: LOGO & BRAND */}
+      <Link to="/" className="flex items-center gap-3">
+        <img src={logo} alt="Logo" className="w-10 h-10 rounded-full" />
+        <span className="text-2xl font-black tracking-tight">Mitho_Bite</span>
+      </Link>
+
+      {/* CENTER: NAV LINKS */}
+      <div className="hidden md:flex items-center gap-10 text-sm font-bold uppercase tracking-widest">
+        {/* 2. Change these to <Link to="..."> */}
+        <Link to="/" className="hover:text-pink-300 transition-colors">Home</Link>
+        <Link to="/products" className="hover:text-pink-300 transition-colors">Products</Link>
+        <Link to="/reviews" className="hover:text-pink-300 transition-colors">Reviews</Link>
+      </div>
+
+      {/* RIGHT: ICONS & BUTTONS */}
+      <div className="flex items-center gap-6">
+        <User size={22} className="cursor-pointer hover:text-pink-300 transition-colors" />
+        
+        <Link to="/cart" className="relative group">
+          <ShoppingCart size={24} className="group-hover:text-pink-300 transition-colors" />
+          {itemCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-[#E94E77] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#7A231E]">
+              {itemCount}
+            </span>
+          )}
         </Link>
 
-        {/* Links */}
-        <div className="flex items-center gap-10 text-gray-200 font-medium">
-          <a href="#" className="hover:text-rose-400 transition">Home</a>
-          <a href="#" className="hover:text-rose-400 transition">Products</a>
-          <a href="#" className="hover:text-rose-400 transition">Reviews</a>
-        </div>
-
-      {/* Profile and Cart */}
-        <div className="flex items-center gap-6">
-          <button className="text-gray-200 hover:text-rose-400 transition">
-            <User size={26} />
-          </button>
-
-        <Link to="/cart" className="relative p-1 hover:scale-110 transition-transform">
-            <ShoppingCart size={26} className="text-white" />
-            {itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#7A231E]">
-                {itemCount}
-              </span>
-            )}
-          </Link>
-
-          <button className="bg-rose-500 text-white px-5 py-2 rounded-xl font-semibold text-sm hover:bg-rose-600 transition shadow-lg shadow-black/20">
-            Sign In
-          </button>
-        </div>
+        <button className="bg-[#E94E77] hover:bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-95">
+          Sign In
+        </button>
       </div>
     </nav>
   );

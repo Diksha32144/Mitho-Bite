@@ -1,5 +1,5 @@
 import React from 'react';
-import donutHero from '../assets/glazed donut.png';
+import donutHero from "../assets/glazed donut.png"; // Remove the space before .png
 
 export default function Featured() {
   return (

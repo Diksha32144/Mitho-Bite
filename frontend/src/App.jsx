@@ -10,6 +10,7 @@ import CategoryBar from './components/CategoryBar';
 import ProductCard from './components/ProductCard';
 import ServiceFeatures from './components/ServiceFeatures';
 import CartPage from './pages/CartPage';
+import ProductPage from './pages/ProductPage'; 
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -123,6 +124,9 @@ function App() {
 
         {/* ROUTE 2: THE DEDICATED CART PAGE */}
         <Route path="/cart" element={<CartPage />} />
+
+        {/* ROUTE 3: THE PRODUCTS PAGE */}
+        <Route path="/products" element={<ProductPage products={products} />} />
       </Routes>
 
       {/* Footer stays at the bottom of every page */}
