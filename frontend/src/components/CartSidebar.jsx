@@ -2,7 +2,8 @@ import { X, Trash2, Plus, Minus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export default function CartSidebar({ isOpen, setIsOpen }) {
-  const { cart, removeFromCart, addToCart, cartTotal } = useCart();
+  // Added decreaseQuantity to the destructuring
+  const { cart, removeFromCart, addToCart, decreaseQuantity, cartTotal } = useCart();
 
   return (
     <>
@@ -13,6 +14,7 @@ export default function CartSidebar({ isOpen, setIsOpen }) {
           onClick={() => setIsOpen(false)}
         />
       )}
+
       {/* Sidebar Panel */}
       <div className={`fixed top-0 right-0 h-full w-full md:w-[450px] bg-white z-[60] shadow-2xl transform transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full">
@@ -41,10 +43,16 @@ export default function CartSidebar({ isOpen, setIsOpen }) {
                     
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3 mt-2">
-                      <button className="p-1 bg-gray-100 rounded-lg hover:bg-pink-100 transition-colors">
+                      {/* FIXED: Linked decreaseQuantity to the Minus button */}
+                      <button 
+                        onClick={() => decreaseQuantity(item.id)}
+                        className="p-1 bg-gray-100 rounded-lg hover:bg-pink-100 transition-colors"
+                      >
                         <Minus size={14} />
                       </button>
+
                       <span className="font-bold text-sm">{item.quantity}</span>
+
                       <button 
                         onClick={() => addToCart(item)}
                         className="p-1 bg-gray-100 rounded-lg hover:bg-pink-100 transition-colors"
@@ -68,6 +76,7 @@ export default function CartSidebar({ isOpen, setIsOpen }) {
           <div className="p-8 border-t bg-gray-50 space-y-4">
             <div className="flex justify-between items-center text-xl font-black">
               <span>Total</span>
+              {/* This will now update correctly if your Context logic is fixed */}
               <span className="text-[#7A231E]">Rs. {cartTotal}</span>
             </div>
             <button className="w-full bg-[#432818] text-white py-5 rounded-[1.5rem] font-bold text-lg hover:bg-black transition-all shadow-xl shadow-brown-100">
