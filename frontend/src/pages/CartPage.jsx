@@ -50,3 +50,46 @@ export default function CartPage() {
                 </div>
               ))
             )}
+            {cart.length > 0 && (
+              <Link to="/" className="inline-flex items-center gap-2 text-[#E94E77] font-bold mt-4 hover:underline">
+                <ArrowLeft size={18} /> Continue Shopping
+              </Link>
+            )}
+          </div>
+
+          {/* Right Side: Order Summary Sidebar */}
+          <div className="lg:w-[400px]">
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 sticky top-28">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
+              
+              <div className="space-y-4 border-b border-gray-100 pb-6 mb-6">
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-gray-800">Rs. {cartTotal}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Shipping</span>
+                  <span className="text-green-500 font-bold uppercase text-xs">Free</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mb-8">
+                <span className="text-xl font-bold">Total</span>
+                <span className="text-3xl font-black text-[#7A231E]">Rs. {cartTotal}</span>
+              </div>
+
+              <button className="w-full bg-[#E94E77] text-white py-5 rounded-2xl font-bold text-lg hover:bg-rose-600 transition-all shadow-lg shadow-rose-100">
+                Proceed to Checkout
+              </button>
+              
+              <div className="mt-6 flex items-center justify-center gap-6 text-[10px] text-gray-400 uppercase font-bold tracking-widest">
+                <span className="flex items-center gap-1">🛡️ Secure</span>
+                <span className="flex items-center gap-1">🚚 Fast Delivery</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
