@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Routes, Route } from 'react-router-dom';
 
 // Layout Components
 import Navbar from './components/Navbar';
@@ -8,15 +9,15 @@ import Featured from './components/Featured';
 import CategoryBar from './components/CategoryBar';
 import ProductCard from './components/ProductCard';
 import ServiceFeatures from './components/ServiceFeatures';
-import CartSidebar from './components/CartSidebar';
+import CartPage from './pages/CartPage';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
 
-// Image Imports - FIXED TO MATCH YOUR ASSETS FOLDER
+// Image Imports - Mapping local assets to the product names
 import cake1 from './assets/choco-cake.png';
 import cake2 from './assets/red-velvet.png';
-import cake3 from './assets/blueberry.png'; // Fixed name
+import cake3 from './assets/blueberry.png'; 
 import pastry1 from './assets/strawberry pastry.png';
 import pastry2 from './assets/blackforest.png';
 import pastry3 from './assets/pineapple.png';
@@ -33,8 +34,6 @@ import cookies3 from './assets/peanut.png';
 function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
-  // NEW: State to control sidebar visibility
-  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Mapping Library: Links database names to local assets
   const imageLib = {
@@ -55,6 +54,7 @@ function App() {
     'Peanut Butter Crunch': cookies3,
   };
 
+  // Fetch products from your Node.js backend
   useEffect(() => {
     axios.get('http://localhost:8800/api/products')
       .then(res => {
@@ -67,6 +67,7 @@ function App() {
       .catch(err => console.error("Database connection error:", err));
   }, []);
 
+  // Filter logic for the Menu
   const filteredProducts = activeCategory === 'All' 
     ? products 
     : products.filter(p => p.category === activeCategory);
@@ -74,47 +75,57 @@ function App() {
   return (
     <div className="min-h-screen font-sans bg-gray-50">
       
-      {/* 1. TOP AREA (Navbar + Hero) */}
-      <div 
-        className="w-full"
-        style={{ 
-          backgroundImage: `url(${wavyBG})`, 
-          backgroundSize: 'cover', 
-          backgroundAttachment: 'fixed' 
-        }}
-      >
-        <Navbar onCartClick={() => setIsCartOpen(true)} />
-        <Hero />
-      </div>
+      {/* Navbar stays at the top of every page */}
+      <Navbar />
 
-      {/* 2. THE MENU GRID */}
-      <section className="bg-white py-24 w-full shadow-inner">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col items-center mb-16">
-            <h2 className="text-5xl font-black text-gray-900 italic">Our Menu</h2>
-            <div className="h-1.5 w-24 bg-[#7A231E] mt-4 rounded-full"></div>
-          </div>
+      <Routes>
+        {/* ROUTE 1: THE MAIN HOME PAGE */}
+        <Route path="/" element={
+          <>
+            {/* Hero Section with Wavy Background */}
+            <div 
+              className="w-full"
+              style={{ 
+                backgroundImage: `url(${wavyBG})`, 
+                backgroundSize: 'cover', 
+                backgroundAttachment: 'fixed' 
+              }}
+            >
+              <Hero />
+            </div>
 
-          <CategoryBar 
-            activeCategory={activeCategory} 
-            setActiveCategory={setActiveCategory} 
-          />
-        
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredProducts.map((item) => (
-              <ProductCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      </section>
+            {/* The Menu Grid Section */}
+            <section id="menu" className="bg-white py-24 w-full shadow-inner">
+              <div className="max-w-7xl mx-auto px-6">
+                <div className="flex flex-col items-center mb-16">
+                  <h2 className="text-5xl font-black text-gray-900 italic">Our Menu</h2>
+                  <div className="h-1.5 w-24 bg-[#7A231E] mt-4 rounded-full"></div>
+                </div>
 
-      {/* 3. FEATURED SECTION (Moved below Menu as requested) */}
-      <Featured />
+                <CategoryBar 
+                  activeCategory={activeCategory} 
+                  setActiveCategory={setActiveCategory} 
+                />
+              
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                  {filteredProducts.map((item) => (
+                    <ProductCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            </section>
 
-      {/* 4. SERVICE FEATURES (Above Footer) */}
-      <ServiceFeatures />
+            {/* Secondary Sections */}
+            <Featured />
+            <ServiceFeatures />
+          </>
+        } />
 
-      {/* 5. DEEP FOOTER */}
+        {/* ROUTE 2: THE DEDICATED CART PAGE */}
+        <Route path="/cart" element={<CartPage />} />
+      </Routes>
+
+      {/* Footer stays at the bottom of every page */}
       <footer className="bg-[#432818] text-white pt-20 pb-10 mt-24">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
           
@@ -164,14 +175,11 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 border-t border-gray-800 mt-20 pt-8 flex justify-between items-center text-[10px] text-gray-500 uppercase tracking-widest">
           <p>© 2026 Mitho Bite Bakery. All rights reserved.</p>
           <div className="flex gap-6 items-center">
-            <span>Cash on Delivery</span>
-            <span>eSewa</span>
+            <span className="flex items-center gap-2">Cash on Delivery</span>
+            <span className="flex items-center gap-2">eSewa</span>
           </div>
         </div>
       </footer>
-      
-      {/* NEW: THE SIDEBAR COMPONENT */}
-      <CartSidebar isOpen={isCartOpen} setIsOpen={setIsCartOpen} />
     </div>
   );
 }

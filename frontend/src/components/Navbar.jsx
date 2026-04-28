@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom';
 import { ShoppingCart, User, Cake } from 'lucide-react';
-import logo from '../assets/logo.png'; // Make sure you have your logo
+import logo from '../assets/logo.png'; 
 import { useCart } from '../context/CartContext';
 
 export default function Navbar({ onCartClick }) {
@@ -11,11 +12,11 @@ export default function Navbar({ onCartClick }) {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-[#7A231E] shadow-lg z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-        {/* Logo and Name */}
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Sweet Crumbs Logo" className="h-10 w-10" />
+        {/* Logo and Name - Wrapped in Link to go Home */}
+        <Link to="/" className="flex items-center gap-3">
+          <img src={logo} alt="Mitho Bite Logo" className="h-10 w-10" />
           <span className="text-2xl font-bold text-white">Mitho_Bite</span>
-        </div>
+        </Link>
 
         {/* Links */}
         <div className="flex items-center gap-10 text-gray-200 font-medium">
@@ -30,15 +31,14 @@ export default function Navbar({ onCartClick }) {
             <User size={26} />
           </button>
 
-          {/* Updated Cart Button */}
-          <button onClick={onCartClick} className="relative p-1 hover:scale-110 transition-transform">
+        <Link to="/cart" className="relative p-1 hover:scale-110 transition-transform">
             <ShoppingCart size={26} className="text-white" />
             {itemCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#7A231E]">
                 {itemCount}
               </span>
             )}
-          </button>
+          </Link>
 
           <button className="bg-rose-500 text-white px-5 py-2 rounded-xl font-semibold text-sm hover:bg-rose-600 transition shadow-lg shadow-black/20">
             Sign In
