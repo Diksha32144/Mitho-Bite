@@ -16,7 +16,7 @@ import ReviewsPage from './pages/ReviewsPage';
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
 
-// Image Imports - Mapping local assets to the product names
+// Image Imports
 import cake1 from './assets/choco-cake.png';
 import cake2 from './assets/red-velvet.png';
 import cake3 from './assets/blueberry.png'; 
@@ -37,7 +37,6 @@ function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
 
-  // Mapping Library: Links database names to local assets
   const imageLib = {
     'Classic Chocolate Cake': cake1,
     'Red Velvet Dream': cake2,
@@ -56,8 +55,8 @@ function App() {
     'Peanut Butter Crunch': cookies3,
   };
 
-  // Fetch products from your Node.js backend
   useEffect(() => {
+    // API CALL
     axios.get('http://localhost:8800/api/products')
       .then(res => {
         const dataWithImages = res.data.map(item => ({
@@ -69,22 +68,23 @@ function App() {
       .catch(err => console.error("Database connection error:", err));
   }, []);
 
-  // Filter logic for the Menu
-  const filteredProducts = activeCategory === 'All' 
+  // UNIVERSAL FILTER: This cleans BOTH strings to match regardless of format
+  const filteredProducts = activeCategory === 'All' || activeCategory === 'All Products'
     ? products 
-    : products.filter(p => p.category === activeCategory);
+    : products.filter(p => {
+        // Removes hyphens, spaces, and makes lowercase (e.g., "Ice-Cream" -> "icecream")
+        const dbCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
+        const selectedCat = activeCategory.toLowerCase().replace(/[^a-z]/g, '');
+        return dbCat === selectedCat;
+      });
 
   return (
     <div className="min-h-screen font-sans bg-gray-50">
-      
-      {/* Navbar stays at the top of every page */}
       <Navbar />
 
       <Routes>
-        {/* ROUTE 1: THE MAIN HOME PAGE */}
         <Route path="/" element={
           <>
-            {/* Hero Section with Wavy Background */}
             <div 
               className="w-full"
               style={{ 
@@ -96,7 +96,6 @@ function App() {
               <Hero />
             </div>
 
-            {/* The Menu Grid Section */}
             <section id="menu" className="bg-white py-24 w-full shadow-inner">
               <div className="max-w-7xl mx-auto px-6">
                 <div className="flex flex-col items-center mb-16">
@@ -109,83 +108,68 @@ function App() {
                   setActiveCategory={setActiveCategory} 
                 />
               
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  {filteredProducts.map((item) => (
-                    <ProductCard key={item.id} item={item} />
-                  ))}
-                </div>
+                {filteredProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {filteredProducts.map((item) => (
+                      <ProductCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 text-gray-400 border-2 border-dashed border-gray-100 rounded-3xl">
+                    <p>No products found in the "{activeCategory}" category.</p>
+                  </div>
+                )}
               </div>
             </section>
 
-            {/* Secondary Sections */}
             <Featured />
             <ServiceFeatures />
           </>
         } />
 
-        {/* ROUTE 2: THE DEDICATED CART PAGE */}
         <Route path="/cart" element={<CartPage />} />
-
-        {/* ROUTE 3: THE PRODUCTS PAGE */}
         <Route path="/products" element={<ProductPage products={products} />} />
-      
-
-      {/* NEW ROUTE FOR REVIEWS */}
         <Route path="/reviews" element={<ReviewsPage />} />
       </Routes>
 
-      {/* Footer stays at the bottom of every page */}
       <footer className="bg-[#432818] text-white pt-20 pb-10 mt-24">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-          
           <div className="space-y-4">
             <h3 className="text-3xl font-black italic">Mitho Bite</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
               Freshly baked happiness delivered to your door. Artisan cakes, pastries, and treats made with love since 2018.
             </p>
           </div>
-
           <div>
             <h4 className="font-bold mb-6 uppercase tracking-widest text-sm text-pink-300">Shop</h4>
-            <ul className="space-y-3 text-gray-400 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Cakes</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Donuts</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Pastries</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
+            <ul className="space-y-3 text-gray-400 text-sm cursor-pointer">
+              <li onClick={() => setActiveCategory('Cakes')}>Cakes</li>
+              <li onClick={() => setActiveCategory('Donuts')}>Donuts</li>
+              <li onClick={() => setActiveCategory('Pastries')}>Pastries</li>
+              <li onClick={() => setActiveCategory('Cookies')}>Cookies</li>
             </ul>
           </div>
-
           <div>
             <h4 className="font-bold mb-6 uppercase tracking-widest text-sm text-pink-300">Customer Care</h4>
             <ul className="space-y-3 text-gray-400 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Order Tracking</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">FAQs</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Shipping Info</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+              <li>Order Tracking</li>
+              <li>FAQs</li>
+              <li>Shipping Info</li>
+              <li>Contact Us</li>
             </ul>
           </div>
-
           <div className="space-y-6">
             <h4 className="font-bold uppercase tracking-widest text-sm text-pink-300">Newsletter</h4>
-            <p className="text-sm text-gray-400">Get 20% off your first order and sweet updates.</p>
             <div className="flex flex-col gap-3">
               <input 
                 type="email" 
                 placeholder="Enter your email" 
-                className="bg-[#2b1a10] border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-300 transition-all"
+                className="bg-[#2b1a10] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none"
               />
-              <button className="bg-[#E94E77] hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg">
+              <button className="bg-[#E94E77] hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all">
                 Subscribe
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 border-t border-gray-800 mt-20 pt-8 flex justify-between items-center text-[10px] text-gray-500 uppercase tracking-widest">
-          <p>© 2026 Mitho Bite Bakery. All rights reserved.</p>
-          <div className="flex gap-6 items-center">
-            <span className="flex items-center gap-2">Cash on Delivery</span>
-            <span className="flex items-center gap-2">eSewa</span>
           </div>
         </div>
       </footer>
