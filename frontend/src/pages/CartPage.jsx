@@ -85,9 +85,11 @@ export default function CartPage() {
                 <span className="text-2xl font-black text-[#7A231E]">Rs. {cartTotal}</span>
               </div>
 
-              <button className="w-full bg-[#E94E77] text-white py-4 rounded-xl font-bold text-base hover:bg-rose-600 transition-all shadow-md">
-                Proceed to Checkout
-              </button>
+             <Link to="/checkout" className="block w-full">
+                <button className="w-full bg-[#E94E77] text-white py-4 rounded-xl font-bold text-base hover:bg-rose-600 transition-all shadow-md">
+                 Proceed to Checkout
+                </button>
+             </Link>
               
               <div className="mt-6 flex items-center justify-center gap-4 text-[9px] text-gray-400 uppercase font-bold tracking-widest">
                 <span className="flex items-center gap-1">🛡️ Secure</span>

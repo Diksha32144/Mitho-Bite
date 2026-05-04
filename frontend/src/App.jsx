@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Routes, Route } from 'react-router-dom';
+import { CartProvider } from './context/CartContext';
 
 // Layout Components
 import Navbar from './components/Navbar';
@@ -12,6 +13,7 @@ import ServiceFeatures from './components/ServiceFeatures';
 import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage'; 
 import ReviewsPage from './pages/ReviewsPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -79,6 +81,7 @@ function App() {
       });
 
   return (
+    <CartProvider>
     <div className="min-h-screen font-sans bg-gray-50">
       <Navbar />
 
@@ -130,6 +133,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products" element={<ProductPage products={products} />} />
         <Route path="/reviews" element={<ReviewsPage />} />
+         <Route path="/checkout" element={<CheckoutPage />} />
       </Routes>
 
       <footer className="bg-[#432818] text-white pt-20 pb-10 mt-24">
@@ -174,6 +178,7 @@ function App() {
         </div>
       </footer>
     </div>
+    </CartProvider>
   );
 }
 
