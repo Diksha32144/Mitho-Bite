@@ -51,36 +51,33 @@ app.post("/api/checkout", (req, res) => {
         db.commit((err) => {
           if (err) return db.rollback(() => res.status(500).json(err));
 
-        // Replace your existing eSewa block with this exact logic
 if (payment_method === 'eSewa') {
-    // 1. Force total_amount to be a whole number string immediately
-    // Using Math.floor ensures no decimals like .00 are passed
-    const amountStr = Math.floor(Number(total_amount)).toString(); 
+    // Force to Integer, then to String
+    const amountStr = parseInt(total_amount).toString(); 
     
-    // 2. Use a cleaner UUID (remove hyphens to be safe)
+    // Use a numeric-only UUID to avoid encoding issues
     const transaction_uuid = `${orderId}${Date.now()}`;
-    
     const product_code = "EPAYTEST";
     const secret = "8g8M8dg76h88dnd91ls0nd535dv75n40"; 
 
-    // 3. Construct the message (CRITICAL: No spaces after commas)
-    const message = `total_amount=${amountStr},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+    const hashString = `total_amount=${amountStr},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
     
     const signature = crypto
       .createHmac('sha256', secret)
-      .update(message)
+      .update(hashString)
       .digest('base64');
 
-    // 4. Console log to verify one last time
-    console.log("FINAL MESSAGE TO HASH:", message);
-    console.log("FINAL SIGNATURE:", signature);
+    console.log("--- DEBUG START ---");
+    console.log("STRING HASHED:", hashString);
+    console.log("SIGNATURE:", signature);
+    console.log("--- DEBUG END ---");
 
     return res.status(200).json({
       esewaConfig: {
         amount: amountStr,
         tax_amount: "0",
-        total_amount: amountStr, 
-        transaction_uuid: transaction_uuid, 
+        total_amount: amountStr,
+        transaction_uuid: transaction_uuid,
         product_code: product_code,
         product_service_charge: "0",
         product_delivery_charge: "0",

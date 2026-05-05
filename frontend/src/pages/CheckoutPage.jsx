@@ -20,63 +20,71 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async (e) => {
-    if (e) e.preventDefault();
-    if (cart.length === 0) return alert("Your cart is empty!");
+  if (e) e.preventDefault();
+  if (cart.length === 0) return alert("Your cart is empty!");
 
-    setLoading(true);
+  setLoading(true);
 
-    const orderData = {
-      total_amount: cartTotal,
-      payment_method: formData.paymentMethod,
-      delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
-      items: cart.map(item => ({ 
-        id: item.id, 
-        quantity: item.quantity, 
-        price: item.price 
-      }))
-    };
-
-    try {
-      const response = await axios.post('http://localhost:8800/api/checkout', orderData);
-      
-      if (response.status === 200 || response.status === 201) {
-        // CASE 1: eSewa
-        if (formData.paymentMethod === 'eSewa' && response.data.esewaConfig) {
-          const config = response.data.esewaConfig;
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
-
-          Object.keys(config).forEach(key => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = key;
-            input.value = config[key];
-            form.appendChild(input);
-          });
-
-          document.body.appendChild(form);
-          clearCart(); 
-          form.submit();
-          return; 
-        } 
-        
-        // CASE 2: Cash on Delivery
-        if (formData.paymentMethod === 'COD') {
-          alert("✅ Order Placed Successfully!");
-          clearCart(); 
-          navigate('/');
-          return; 
-        }
-      }
-    } catch (err) {
-      console.error("Order Error:", err);
-      alert("Error: " + (err.response?.data?.message || "Could not connect to server."));
-    } finally {
-      setLoading(false);
-    }
+  const orderData = {
+    total_amount: cartTotal,
+    payment_method: formData.paymentMethod,
+    delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
+    items: cart.map(item => ({ id: item.id, quantity: item.quantity, price: item.price }))
   };
 
+  try {
+    const response = await axios.post('http://localhost:8800/api/checkout', orderData);
+    
+    if (response.status === 200 || response.status === 201) {
+      if (formData.paymentMethod === 'eSewa' && response.data.esewaConfig) {
+        const config = response.data.esewaConfig;
+        
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+
+        // Map every field strictly as a string
+        const fields = {
+          amount: String(config.amount),
+          tax_amount: String(config.tax_amount),
+          total_amount: String(config.total_amount),
+          transaction_uuid: String(config.transaction_uuid),
+          product_code: String(config.product_code),
+          product_service_charge: String(config.product_service_charge),
+          product_delivery_charge: String(config.product_delivery_charge),
+          success_url: String(config.success_url),
+          failure_url: String(config.failure_url),
+          signed_field_names: String(config.signed_field_names),
+          signature: String(config.signature),
+        };
+
+        Object.entries(fields).forEach(([key, value]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = key;
+          input.value = value;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        clearCart(); 
+        form.submit();
+        return; 
+      } 
+      
+      if (formData.paymentMethod === 'COD') {
+        alert("✅ Order Placed Successfully!");
+        clearCart(); 
+        navigate('/');
+      }
+    }
+  } catch (err) {
+    console.error("Order Error:", err);
+    alert("Error: " + (err.response?.data?.message || "Check console for details"));
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-28 pb-20 px-6 font-sans">
       <div className="max-w-6xl mx-auto">
