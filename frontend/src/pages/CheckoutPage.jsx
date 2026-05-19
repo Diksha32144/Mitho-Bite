@@ -18,73 +18,78 @@ const CheckoutPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+const handlePlaceOrder = async (e) => {
+    if (e) e.preventDefault();
+    if (cart.length === 0) return alert("Your cart is empty!");
 
-  const handlePlaceOrder = async (e) => {
-  if (e) e.preventDefault();
-  if (cart.length === 0) return alert("Your cart is empty!");
+    setLoading(true);
 
-  setLoading(true);
+    const orderData = {
+      // Pass the numerical value; your fixed backend will convert this cleanly to .toFixed(2) for eSewa
+      total_amount: Number(cartTotal), 
+      payment_method: formData.paymentMethod,
+      delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
+      items: cart.map(item => ({ id: item.id, quantity: item.quantity, price: item.price }))
+    };
 
-  const orderData = {
-    total_amount: cartTotal,
-    payment_method: formData.paymentMethod,
-    delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
-    items: cart.map(item => ({ id: item.id, quantity: item.quantity, price: item.price }))
+    try {
+      const response = await axios.post('http://localhost:8800/api/checkout', orderData);
+      
+      if (response.status === 200 || response.status === 201) {
+        if (formData.paymentMethod === 'eSewa' && response.data.esewaConfig) {
+          const config = response.data.esewaConfig;
+          
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+
+          // The dynamic key map exactly matching the clean backend object structure
+          const fields = {
+            amount: String(config.amount),
+            tax_amount: String(config.tax_amount),
+            total_amount: String(config.total_amount),
+            transaction_uuid: String(config.transaction_uuid),
+            product_code: String(config.product_code),
+            product_service_charge: String(config.product_service_charge),
+            product_delivery_charge: String(config.product_delivery_charge),
+            success_url: String(config.success_url),
+            failure_url: String(config.failure_url),
+            signed_field_names: String(config.signed_field_names),
+            signature: String(config.signature),
+          };
+
+          // Append fields as hidden input fields cleanly
+          Object.entries(fields).forEach(([key, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+          });
+
+          document.body.appendChild(form);
+          clearCart(); 
+          form.submit();
+          
+          // Clean up the DOM element
+          document.body.removeChild(form);
+          return; 
+        }
+
+        if (formData.paymentMethod === 'COD') {
+          alert("✅ Order Placed Successfully!");
+          clearCart(); 
+          navigate('/');
+        }
+      }
+    } catch (err) {
+      console.error("Order Error:", err);
+      alert("Error: " + (err.response?.data?.message || "Check console for details"));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    const response = await axios.post('http://localhost:8800/api/checkout', orderData);
-    
-    if (response.status === 200 || response.status === 201) {
-      if (formData.paymentMethod === 'eSewa' && response.data.esewaConfig) {
-        const config = response.data.esewaConfig;
-        
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
-
-        // Map every field strictly as a string
-        const fields = {
-          amount: String(config.amount),
-          tax_amount: String(config.tax_amount),
-          total_amount: String(config.total_amount),
-          transaction_uuid: String(config.transaction_uuid),
-          product_code: String(config.product_code),
-          product_service_charge: String(config.product_service_charge),
-          product_delivery_charge: String(config.product_delivery_charge),
-          success_url: String(config.success_url),
-          failure_url: String(config.failure_url),
-          signed_field_names: String(config.signed_field_names),
-          signature: String(config.signature),
-        };
-
-        Object.entries(fields).forEach(([key, value]) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = key;
-          input.value = value;
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        clearCart(); 
-        form.submit();
-        return; 
-      } 
-      
-      if (formData.paymentMethod === 'COD') {
-        alert("✅ Order Placed Successfully!");
-        clearCart(); 
-        navigate('/');
-      }
-    }
-  } catch (err) {
-    console.error("Order Error:", err);
-    alert("Error: " + (err.response?.data?.message || "Check console for details"));
-  } finally {
-    setLoading(false);
-  }
-};
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-28 pb-20 px-6 font-sans">
       <div className="max-w-6xl mx-auto">
@@ -144,7 +149,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Right Column: Order Summary (Updated UI) */}
+          {/* Right Column: Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-50 sticky top-28">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Order Summary</h2>

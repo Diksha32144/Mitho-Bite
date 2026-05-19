@@ -14,6 +14,8 @@ import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage'; 
 import ReviewsPage from './pages/ReviewsPage';
 import CheckoutPage from './pages/CheckoutPage';
+import SuccessPage from './pages/SuccessPage'; // Added explicit page import
+import ScrollToTop from "./components/ScrollToTop";
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -58,7 +60,6 @@ function App() {
   };
 
   useEffect(() => {
-    // API CALL
     axios.get('http://localhost:8800/api/products')
       .then(res => {
         const dataWithImages = res.data.map(item => ({
@@ -70,11 +71,9 @@ function App() {
       .catch(err => console.error("Database connection error:", err));
   }, []);
 
-  // UNIVERSAL FILTER: This cleans BOTH strings to match regardless of format
   const filteredProducts = activeCategory === 'All' || activeCategory === 'All Products'
     ? products 
     : products.filter(p => {
-        // Removes hyphens, spaces, and makes lowercase (e.g., "Ice-Cream" -> "icecream")
         const dbCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
         const selectedCat = activeCategory.toLowerCase().replace(/[^a-z]/g, '');
         return dbCat === selectedCat;
@@ -84,6 +83,9 @@ function App() {
     <CartProvider>
     <div className="min-h-screen font-sans bg-gray-50">
       <Navbar />
+
+      {/* ✅ FIXED: ScrollToTop is placed outside the routes so it resets window position for ALL page updates */}
+      <ScrollToTop /> 
 
       <Routes>
         <Route path="/" element={
@@ -133,7 +135,8 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products" element={<ProductPage products={products} />} />
         <Route path="/reviews" element={<ReviewsPage />} />
-         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/success" element={<SuccessPage />} />
       </Routes>
 
       <footer className="bg-[#432818] text-white pt-20 pb-10 mt-24">

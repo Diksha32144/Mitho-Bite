@@ -51,43 +51,43 @@ app.post("/api/checkout", (req, res) => {
         db.commit((err) => {
           if (err) return db.rollback(() => res.status(500).json(err));
 
-if (payment_method === 'eSewa') {
-    // Force to Integer, then to String
-    const amountStr = parseInt(total_amount).toString(); 
-    
-    // Use a numeric-only UUID to avoid encoding issues
-    const transaction_uuid = `${orderId}${Date.now()}`;
-    const product_code = "EPAYTEST";
-    const secret = "8g8M8dg76h88dnd91ls0nd535dv75n40"; 
+          if (payment_method === 'eSewa') {
+            // FIX 1: Force exactly 2 decimal places (e.g., "450.00")
+            const amountStr = Number(total_amount).toFixed(2); 
+            const transaction_uuid = `${orderId}-${Date.now()}`;
+            const product_code = "EPAYTEST";
+            
+            // FIX 2: Correct eSewa test merchant secret key
+            const secret = "8gBm/:&EnhH.1/q"; 
 
-    const hashString = `total_amount=${amountStr},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
-    
-    const signature = crypto
-      .createHmac('sha256', secret)
-      .update(hashString)
-      .digest('base64');
+            const hashString = `total_amount=${amountStr},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+            
+            const signature = crypto
+              .createHmac('sha256', secret)
+              .update(hashString)
+              .digest('base64');
 
-    console.log("--- DEBUG START ---");
-    console.log("STRING HASHED:", hashString);
-    console.log("SIGNATURE:", signature);
-    console.log("--- DEBUG END ---");
+            console.log("--- DEBUG START ---");
+            console.log("STRING HASHED:", hashString);
+            console.log("SIGNATURE:", signature);
+            console.log("--- DEBUG END ---");
 
-    return res.status(200).json({
-      esewaConfig: {
-        amount: amountStr,
-        tax_amount: "0",
-        total_amount: amountStr,
-        transaction_uuid: transaction_uuid,
-        product_code: product_code,
-        product_service_charge: "0",
-        product_delivery_charge: "0",
-        success_url: "http://localhost:5173/success", 
-        failure_url: "http://localhost:5173/checkout",
-        signed_field_names: "total_amount,transaction_uuid,product_code",
-        signature: signature
-      }
-    });
-}
+            return res.status(200).json({
+              esewaConfig: {
+                amount: amountStr,
+                tax_amount: "0",
+                total_amount: amountStr,
+                transaction_uuid: transaction_uuid,
+                product_code: product_code,
+                product_service_charge: "0",
+                product_delivery_charge: "0",
+                success_url: "http://localhost:5173/success", 
+                failure_url: "http://localhost:5173/checkout",
+                signed_field_names: "total_amount,transaction_uuid,product_code",
+                signature: signature
+              }
+            });
+          }
 
           return res.status(200).json({ success: true, message: "COD Order Placed!" });
         });
