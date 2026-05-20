@@ -22,6 +22,7 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL Database");
 });
 
+// 🏪 GET MENU PRODUCTS
 app.get("/api/products", (req, res) => {
   const q = "SELECT * FROM products";
   db.query(q, (err, data) => {
@@ -30,15 +31,23 @@ app.get("/api/products", (req, res) => {
   });
 });
 
+// 💳 INITIAL ORDER GENERATOR & ESEWA SIGNER
 app.post("/api/checkout", (req, res) => {
   const { total_amount, payment_method, delivery_address, items } = req.body;
 
   db.beginTransaction((err) => {
     if (err) return res.status(500).json(err);
 
-    const orderSql = "INSERT INTO orders (user_id, total_amount, payment_method, payment_status, order_status, delivery_address) VALUES (1, ?, ?, 'Unpaid', 'Pending', ?)";
+    // Generate tracking UUID right away
+    const temporary_uuid = `MB-${Math.floor(1000 + Math.random() * 9000)}-${Date.now()}`;
+
+    const orderSql = `
+      INSERT INTO orders 
+      (user_id, total_amount, payment_method, payment_status, order_status, delivery_address, transaction_uuid) 
+      VALUES (1, ?, ?, 'Unpaid', 'Pending', ?, ?)
+    `;
     
-    db.query(orderSql, [total_amount, payment_method, delivery_address], (err, result) => {
+    db.query(orderSql, [total_amount, payment_method, delivery_address, temporary_uuid], (err, result) => {
       if (err) return db.rollback(() => res.status(500).json(err));
 
       const orderId = result.insertId;
@@ -51,16 +60,13 @@ app.post("/api/checkout", (req, res) => {
         db.commit((err) => {
           if (err) return db.rollback(() => res.status(500).json(err));
 
+          // ────────────── Pathway A: eSewa Gateway Integration ──────────────
           if (payment_method === 'eSewa') {
-            // FIX 1: Force exactly 2 decimal places (e.g., "450.00")
             const amountStr = Number(total_amount).toFixed(2); 
-            const transaction_uuid = `${orderId}-${Date.now()}`;
             const product_code = "EPAYTEST";
-            
-            // FIX 2: Correct eSewa test merchant secret key
             const secret = "8gBm/:&EnhH.1/q"; 
 
-            const hashString = `total_amount=${amountStr},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+            const hashString = `total_amount=${amountStr},transaction_uuid=${temporary_uuid},product_code=${product_code}`;
             
             const signature = crypto
               .createHmac('sha256', secret)
@@ -73,11 +79,12 @@ app.post("/api/checkout", (req, res) => {
             console.log("--- DEBUG END ---");
 
             return res.status(200).json({
+              payment_method: 'eSewa',
               esewaConfig: {
                 amount: amountStr,
                 tax_amount: "0",
                 total_amount: amountStr,
-                transaction_uuid: transaction_uuid,
+                transaction_uuid: temporary_uuid, 
                 product_code: product_code,
                 product_service_charge: "0",
                 product_delivery_charge: "0",
@@ -89,9 +96,53 @@ app.post("/api/checkout", (req, res) => {
             });
           }
 
-          return res.status(200).json({ success: true, message: "COD Order Placed!" });
+          // ────────────── Pathway B: Cash on Delivery Verification ──────────────
+          // 🎯 FIXED: Explicitly return the structural keys your frontend expects to keep logic uniform
+          return res.status(200).json({ 
+            success: true, 
+            payment_method: 'COD',
+            message: "COD Order Placed Successfully!",
+            orderId: orderId
+          });
         });
       });
+    });
+  });
+});
+
+// 🎯 UPDATE STATUS AFTER ESEWA VERIFICATION
+app.put('/api/orders/update-status', (req, res) => {
+  const { transaction_uuid, transaction_code } = req.body;
+
+  if (!transaction_uuid) {
+    return res.status(400).json({ 
+      success: false, 
+      error: "Missing tracking transaction_uuid parameter." 
+    });
+  }
+
+  console.log("--- DATABASE STATE UPDATE RUNNING ---");
+  const updateQuery = `
+    UPDATE orders 
+    SET payment_status = 'Paid', transaction_code = ? 
+    WHERE transaction_uuid = ?
+  `;
+
+  db.query(updateQuery, [transaction_code, transaction_uuid], (err, result) => {
+    if (err) {
+      console.error("❌ SQL Processing Error:", err);
+      return res.status(500).json({ success: false, error: "Database engine write breakdown." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, error: "No purchase instance located matching identifier." });
+    }
+
+    console.log("✅ Success! Affected Database Row Count:", result.affectedRows);
+    return res.status(200).json({ 
+      success: true, 
+      message: "Order changed from Unpaid -> Paid seamlessly!",
+      affectedRows: result.affectedRows
     });
   });
 });

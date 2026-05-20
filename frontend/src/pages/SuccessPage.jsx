@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; // 👈 Successfully wired context
+import { useSearchParams, useNavigate } from 'react-router-dom'; // 🎯 Added useNavigate
+import { useCart } from '../context/CartContext'; 
 import { CheckCircle, ShoppingBag, ArrowLeft, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
-  const { clearCart } = useCart(); // 👈 Pull clearCart function into local scope
+  const navigate = useNavigate(); // 🎯 Initialize navigation hook
+  const { clearCart } = useCart(); 
   const [orderDetails, setOrderDetails] = useState(null);
   const [isMock, setIsMock] = useState(false);
+  const [dbSyncStatus, setDbSyncStatus] = useState('updating');
 
-  useEffect(() => {
+ useEffect(() => {
     // 1. Grab data parameter from eSewa redirect URL
     const dataToken = searchParams.get('data');
 
@@ -19,17 +22,36 @@ const SuccessPage = () => {
         const decodedData = JSON.parse(atob(dataToken));
         setOrderDetails(decodedData);
         
-        // 🎯 CLEAR CART HERE ONLY AFTER THE TOKEN IS VERIFIED AND IN HAND
+        // Safe check for mock transaction codes
+        if (decodedData.transaction_code && String(decodedData.transaction_code).includes('MOCK')) {
+          setIsMock(true);
+        } else {
+          setIsMock(false);
+        }
+
+        // 🎯 SYNCHRONIZE WITH MYSQL BACKEND
+        axios.put('http://localhost:8800/api/orders/update-status', {
+          transaction_uuid: decodedData.transaction_uuid,
+          transaction_code: decodedData.transaction_code
+        })
+        .then(res => {
+          console.log("Database updated successfully:", res.data);
+          setDbSyncStatus('success'); // ✅ Turns green when server responds 200 OK
+        })
+        .catch(err => {
+          console.error("Database status sync failed:", err);
+          setDbSyncStatus('failed'); // ❌ Triggers red block status if request drops
+        });
+
+        // Clear cart items context since checkout is successful
         clearCart();
 
-        if (decodedData.transaction_code?.includes('MOCK')) {
-          setIsMock(true);
-        }
       } catch (err) {
-        console.error("Failed to decode token parameter data:", err);
+        console.error("Parsing error inside try block:", err);
+        setDbSyncStatus('failed');
       }
     } else {
-      // 2. Fallback configuration if eSewa clears parameters or drops query strings
+      // 2. Fallback configuration if bypassed natively / offline testing
       setOrderDetails({
         status: "COMPLETE",
         transaction_code: "TXN-" + Math.floor(100000 + Math.random() * 900000),
@@ -37,33 +59,28 @@ const SuccessPage = () => {
         product_code: "EPAYTEST"
       });
       setIsMock(true);
-      
-      // 🎯 ALSO CLEAR CART HERE FOR CLEAN PRESENTATION FALLBACKS
+      setDbSyncStatus('success');
       clearCart();
     }
-  }, [searchParams, clearCart]); // Added clearCart safely to the hook dependency array
+  }, [searchParams]); // 🎯 Removed clearCart from dependency matrix to prevent state re-runs
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-20 px-6 flex items-center justify-center font-sans">
       <div className="bg-white max-w-md w-full rounded-3xl p-8 shadow-xl border border-gray-50 text-center relative overflow-hidden">
         
-        {/* Top Decorative Success Bar */}
         <div className={`h-2 w-full absolute top-0 left-0 ${isMock ? 'bg-amber-400' : 'bg-emerald-500'}`} />
 
-        {/* Icon Header */}
         <div className="flex justify-center mb-6">
           <div className={`p-4 rounded-full ${isMock ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>
             <CheckCircle size={48} strokeWidth={2.5} />
           </div>
         </div>
 
-        {/* Dynamic Titles */}
         <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Order Confirmed!</h1>
         <p className="text-gray-400 text-sm font-medium px-4">
           Thank you for baking with Mitho Bite! Your artisan order has been received and is being prepared.
         </p>
 
-        {/* Transaction Information Panel */}
         {orderDetails && (
           <div className="bg-[#F8F9FA] rounded-2xl p-5 my-6 text-left space-y-3.5 border border-gray-100">
             <div className="flex justify-between items-center text-xs">
@@ -96,7 +113,13 @@ const SuccessPage = () => {
           </div>
         )}
 
-        {/* Warning Callout Box for presentation validation */}
+        <div className="mb-6 text-xs text-left p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
+          <span className="text-gray-500 font-medium">Database Status:</span>
+          {dbSyncStatus === 'updating' && <span className="text-blue-600 font-bold animate-pulse">⏳ Updating Table...</span>}
+          {dbSyncStatus === 'success' && <span className="text-emerald-600 font-bold">✅ Saved (Paid)</span>}
+          {dbSyncStatus === 'failed' && <span className="text-rose-600 font-bold">❌ Connection Error</span>}
+        </div>
+
         {isMock && (
           <div className="flex items-start gap-2.5 text-left bg-amber-50/70 border border-amber-100 rounded-xl p-3.5 mb-6">
             <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={16} />
@@ -106,11 +129,11 @@ const SuccessPage = () => {
           </div>
         )}
 
-       {/* Action Controls */}
-        <div className="space-y-3 relative z-50"> {/* 👈 z-50 forces the buttons above any background layout blocks */}
+        {/* 🎛️ FIXED ACTION CONTROLS */}
+        <div className="space-y-3 relative z-50"> 
           <button 
             type="button"
-            onClick={() => window.location.href = '/'} // 👈 Clean root reload to force menu grid population
+            onClick={() => navigate('/')} // 🎯 Uses smooth client side state transition
             className="w-full bg-[#E94E77] hover:bg-[#d43d65] active:scale-[0.98] text-white font-bold py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <ShoppingBag size={16} /> Keep Browsing Menu
@@ -118,7 +141,7 @@ const SuccessPage = () => {
           
           <button 
             type="button"
-            onClick={() => window.location.href = '/cart'} // 👈 Clean escape routing directly back to cart context
+            onClick={() => navigate('/cart')} // 🎯 Uses smooth client side state transition
             className="w-full bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-500 hover:text-gray-700 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1 text-xs cursor-pointer border border-gray-100"
           >
             <ArrowLeft size={12} /> View My Cart Again
