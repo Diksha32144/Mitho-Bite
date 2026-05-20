@@ -18,14 +18,14 @@ const CheckoutPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-const handlePlaceOrder = async (e) => {
+
+  const handlePlaceOrder = async (e) => {
     if (e) e.preventDefault();
     if (cart.length === 0) return alert("Your cart is empty!");
 
     setLoading(true);
 
     const orderData = {
-      // Pass the numerical value; your fixed backend will convert this cleanly to .toFixed(2) for eSewa
       total_amount: Number(cartTotal), 
       payment_method: formData.paymentMethod,
       delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
@@ -43,7 +43,6 @@ const handlePlaceOrder = async (e) => {
           form.method = "POST";
           form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
 
-          // The dynamic key map exactly matching the clean backend object structure
           const fields = {
             amount: String(config.amount),
             tax_amount: String(config.tax_amount),
@@ -58,7 +57,6 @@ const handlePlaceOrder = async (e) => {
             signature: String(config.signature),
           };
 
-          // Append fields as hidden input fields cleanly
           Object.entries(fields).forEach(([key, value]) => {
             const input = document.createElement("input");
             input.type = "hidden";
@@ -68,10 +66,9 @@ const handlePlaceOrder = async (e) => {
           });
 
           document.body.appendChild(form);
-          clearCart(); 
+          //clearCart(); 
           form.submit();
           
-          // Clean up the DOM element
           document.body.removeChild(form);
           return; 
         }
@@ -189,6 +186,7 @@ const handlePlaceOrder = async (e) => {
                 </div>
               </div>
 
+              {/* Main Submit Button */}
               <button 
                 onClick={handlePlaceOrder} 
                 disabled={loading} 
@@ -196,6 +194,35 @@ const handlePlaceOrder = async (e) => {
               >
                 {loading ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20} className="bg-white/20 rounded p-0.5" /> Place Order</>}
               </button>
+
+              {/* 🛠️ DEVELOPER PRESENTATION BYPASS BUTTON */}
+              {formData.paymentMethod === 'eSewa' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (cart.length === 0) return alert("Your cart is empty!");
+                    
+                    // 1. Create a simulated clean API v2 COMPLETE token object payload structure
+                    const mockPayload = {
+                      status: "COMPLETE",
+                      transaction_code: "MOCK-TX-" + Math.floor(100000 + Math.random() * 900000),
+                      total_amount: Number(cartTotal).toFixed(2),
+                      transaction_uuid: "1-DEMO" + Date.now(), // Simulates Order ID 1 splitting element
+                      product_code: "EPAYTEST",
+                      signed_field_names: "total_amount,transaction_uuid,product_code"
+                    };
+
+                    // 2. Base64 Encode exactly how the real gateway returns data parameters
+                    const base64Token = btoa(JSON.stringify(mockPayload));
+
+                    // 3. Force redirection seamlessly straight to your Success page router endpoint
+                    window.location.href = `/success?data=${base64Token}`;
+                  }}
+                  className="mt-3 w-full border-2 border-dashed border-amber-400 bg-amber-50/60 hover:bg-amber-50 text-amber-800 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  ⚠️ Sandbox Offline? Force Success Route
+                </button>
+              )}
 
               <Link to="/cart" className="block text-center mt-6 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">
                 Back to Cart
