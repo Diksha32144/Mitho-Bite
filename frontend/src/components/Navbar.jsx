@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // 🎯 Added routing hooks
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import logo from '../assets/logo.png'; 
@@ -11,17 +11,25 @@ export default function Navbar() {
 
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
+  // 🎯 AUTH CHECK: Grab the session object dynamically if it exists in the browser
+  const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+
+  // 🎯 LOGOUT HANDLER: Destroys user local storage session and forces a clean state reload
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    handleCleanNavigate('/login');
+    window.location.reload();
+  };
+
   // 🎯 SMART MENU SCROLLER: Safely bounces back home and scrolls to #menu anchor from ANY page path
   const handleMenuNavigation = (e) => {
     e.preventDefault();
     if (location.pathname !== '/') {
-      // If on /cart or /reviews, shift route to home first, then find the menu section anchor
       navigate('/', { replace: true });
       setTimeout(() => {
         document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } else {
-      // If already home, simply scroll down smoothly
       document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -42,7 +50,6 @@ export default function Navbar() {
 
       {/* CENTER: NAV LINKS */}
       <div className="hidden md:flex items-center gap-10 text-sm font-bold uppercase tracking-widest">
-        {/* Uses smart anchor handler to smoothly glide down to your product deck */}
         <a 
           href="#menu" 
           onClick={handleMenuNavigation} 
@@ -64,11 +71,10 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* RIGHT: ICONS & BUTTONS */}
+      {/* RIGHT: ICONS & DYNAMIC AUTH BUTTONS */}
       <div className="flex items-center gap-6">
         <User size={22} className="cursor-pointer hover:text-pink-300 transition-colors" />
         
-        {/* Updated Cart link to strip out url transaction queries instantaneously */}
         <button 
           onClick={() => handleCleanNavigate('/cart')} 
           className="relative group block pt-1"
@@ -81,9 +87,27 @@ export default function Navbar() {
           )}
         </button>
 
-        <button className="bg-[#E94E77] hover:bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-95">
-          Sign In
-        </button>
+        {/* 🎯 DYNAMIC RENDERING BLOCK BASED ON LOGIN STATUS */}
+        {storedUser ? (
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-bold text-pink-200 uppercase tracking-wider bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/50">
+              👋 {storedUser.full_name ? storedUser.full_name.split(' ')[0] : 'User'}
+            </span>
+            <button 
+              onClick={handleLogout}
+              className="bg-transparent border border-white/40 hover:border-white hover:bg-white hover:text-[#7A231E] text-white px-4 py-1.5 rounded-xl font-bold text-xs transition-all active:scale-95"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={() => handleCleanNavigate('/login')}
+            className="bg-[#E94E77] hover:bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-95"
+          >
+            Sign In
+          </button>
+        )}
       </div>
     </nav>
   );

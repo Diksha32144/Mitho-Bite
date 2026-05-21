@@ -1,18 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { User, MapPin, CreditCard, Banknote, Loader2, CheckCircle2 } from 'lucide-react';
+import { User, MapPin, CreditCard, Banknote, Loader2, CheckCircle2, Lock } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', phone: '',
     street: '', city: '', zip: '', paymentMethod: 'COD' 
   });
+
+  // 🎯 LOAD AUTH USER DATA ON INITIALIZATION
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+    if (savedUser) {
+      setCurrentUser(savedUser);
+      
+      // Split full name safely into fields if it contains a space
+      const nameParts = savedUser.full_name ? savedUser.full_name.split(' ') : ['', ''];
+      const first = nameParts[0] || '';
+      const last = nameParts.slice(1).join(' ') || '';
+
+      // Autofill inputs seamlessly using account variables from your users table
+      setFormData((prev) => ({
+        ...prev,
+        firstName: first,
+        lastName: last,
+        email: savedUser.email || '',
+        phone: savedUser.phone || '',
+        street: savedUser.address || '',
+      }));
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,10 +46,13 @@ const CheckoutPage = () => {
   const handlePlaceOrder = async (e) => {
     if (e) e.preventDefault();
     if (cart.length === 0) return alert("Your cart is empty!");
+    if (!currentUser) return alert("Please sign in to complete your transaction.");
 
     setLoading(true);
 
+    // 🎯 DYNAMIC UPDATE: Attaching authenticated user_id directly from login context payload
     const orderData = {
+      user_id: currentUser.id, 
       total_amount: Number(cartTotal), 
       payment_method: formData.paymentMethod,
       delivery_address: `${formData.street}, ${formData.city}, ${formData.zip}`,
@@ -66,9 +93,7 @@ const CheckoutPage = () => {
           });
 
           document.body.appendChild(form);
-          //clearCart(); 
           form.submit();
-          
           document.body.removeChild(form);
           return; 
         }
@@ -81,11 +106,34 @@ const CheckoutPage = () => {
       }
     } catch (err) {
       console.error("Order Error:", err);
-      alert("Error: " + (err.response?.data?.message || "Check console for details"));
+      alert("Error: " + (err.response?.data?.error || "Check console for details"));
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔒 SECURITY CHECK: If visitor is guest, display elegant prompt screen to log in
+  if (!localStorage.getItem('user')) {
+    return (
+      <div className="bg-[#FAF9F6] min-h-screen pt-36 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-center">
+          <div className="w-16 h-16 bg-pink-50 text-[#E94E77] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 italic mb-2">Authentication Required</h2>
+          <p className="text-gray-500 text-sm mb-6">Please log in or register an account to place and track your food deliveries safely!</p>
+          <div className="space-y-3">
+            <button onClick={() => navigate('/login')} className="w-full bg-[#7A231E] hover:bg-red-900 text-white font-bold py-3 rounded-xl transition-all shadow-md">
+              Sign In
+            </button>
+            <button onClick={() => navigate('/register')} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-all">
+              Create Account
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-28 pb-20 px-6 font-sans">
@@ -101,10 +149,10 @@ const CheckoutPage = () => {
                 <h2 className="text-xl font-bold text-gray-800">Contact Information</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input name="firstName" placeholder="First Name" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none" />
-                <input name="lastName" placeholder="Last Name" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none" />
-                <input name="email" placeholder="Email" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none" />
-                <input name="phone" placeholder="Phone" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none" />
+                <input name="firstName" value={formData.firstName} placeholder="First Name" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
+                <input name="lastName" value={formData.lastName} placeholder="Last Name" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
+                <input name="email" value={formData.email} placeholder="Email" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
+                <input name="phone" value={formData.phone} placeholder="Phone" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
               </div>
             </div>
 
@@ -115,10 +163,10 @@ const CheckoutPage = () => {
                 <h2 className="text-xl font-bold text-gray-800">Shipping Address</h2>
               </div>
               <div className="space-y-4">
-                <input name="street" placeholder="Street Address" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none" />
+                <input name="street" value={formData.street} placeholder="Street Address" onChange={handleInputChange} className="w-full bg-[#EBF2FF] p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
                 <div className="grid grid-cols-2 gap-4">
-                  <input name="city" placeholder="City" onChange={handleInputChange} className="bg-[#EBF2FF] w-full p-3 rounded-xl text-sm focus:outline-none" />
-                  <input name="zip" placeholder="Zip Code" onChange={handleInputChange} className="bg-[#EBF2FF] w-full p-3 rounded-xl text-sm focus:outline-none" />
+                  <input name="city" value={formData.city} placeholder="City" onChange={handleInputChange} className="bg-[#EBF2FF] w-full p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
+                  <input name="zip" value={formData.zip} placeholder="Zip Code" onChange={handleInputChange} className="bg-[#EBF2FF] w-full p-3 rounded-xl text-sm focus:outline-none font-medium text-gray-700" />
                 </div>
               </div>
             </div>
@@ -201,21 +249,18 @@ const CheckoutPage = () => {
                   type="button"
                   onClick={() => {
                     if (cart.length === 0) return alert("Your cart is empty!");
+                    if (!currentUser) return alert("Please log in first!");
                     
-                    // 1. Create a simulated clean API v2 COMPLETE token object payload structure
                     const mockPayload = {
                       status: "COMPLETE",
                       transaction_code: "MOCK-TX-" + Math.floor(100000 + Math.random() * 900000),
                       total_amount: Number(cartTotal).toFixed(2),
-                      transaction_uuid: "1-DEMO" + Date.now(), // Simulates Order ID 1 splitting element
+                      transaction_uuid: `MB-${Math.floor(1000 + Math.random() * 9000)}-${Date.now()}`,
                       product_code: "EPAYTEST",
                       signed_field_names: "total_amount,transaction_uuid,product_code"
                     };
 
-                    // 2. Base64 Encode exactly how the real gateway returns data parameters
                     const base64Token = btoa(JSON.stringify(mockPayload));
-
-                    // 3. Force redirection seamlessly straight to your Success page router endpoint
                     window.location.href = `/success?data=${base64Token}`;
                   }}
                   className="mt-3 w-full border-2 border-dashed border-amber-400 bg-amber-50/60 hover:bg-amber-50 text-amber-800 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"

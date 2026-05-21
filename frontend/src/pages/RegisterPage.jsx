@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-window';
-import { useNavigate as useNav } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom"; // 🎯 Clean import
+import axios from "axios";
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({ full_name: '', email: '', password: '', address: '', phone: '' });
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    address: "",
+    phone: ""
+  });
   const [error, setError] = useState('');
-  const navigate = useNav();
+  
+  const navigate = useNavigate(); // 🎯 FIX: Changed from useNav() to useNavigate()
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post('http://localhost:8800/api/auth/register', formData);
+      const res = await axios.post('http://localhost:8800/api/auth/register', formData); // Double-check your route path
       if (res.data.success) {
-        alert("Registration complete! Please sign in with your new credentials.");
+        alert("Registration complete! Please sign in.");
         navigate('/login');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed.');
+      setError(err.response?.data?.error || 'Registration failed');
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-24 px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
