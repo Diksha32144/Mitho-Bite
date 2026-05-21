@@ -2,6 +2,7 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const app = express();
 app.use(cors()); 
@@ -22,12 +23,78 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL Database");
 });
 
-// 🏪 GET MENU PRODUCTS
+//  GET MENU PRODUCTS
 app.get("/api/products", (req, res) => {
   const q = "SELECT * FROM products";
   db.query(q, (err, data) => {
     if (err) return res.status(500).json({ error: "DB Error" });
     return res.status(200).json(data);
+  });
+});
+
+// 📝 USER REGISTER ENDPOINT
+app.post("/api/auth/register", async (req, res) => {
+  const { full_name, email, password, address, phone } = req.body;
+
+  if (!full_name || !email || !password) {
+    return res.status(400).json({ error: "Name, email, and password are required!" });
+  }
+
+  try {
+    // Encrypt the password before saving to DB
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const q = "INSERT INTO users (full_name, email, password, role, address, phone) VALUES (?, ?, ?, 'user', ?, ?)";
+    
+    db.query(q, [full_name, email, hashedPassword, address || null, phone || null], (err, result) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(400).json({ error: "This email is already registered!" });
+        }
+        return res.status(500).json({ error: "Database error during registration." });
+      }
+      return res.status(201).json({ success: true, message: "Account created successfully!" });
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Server encryption error." });
+  }
+});
+
+// 🔑 USER LOGIN ENDPOINT
+app.post("/api/auth/login", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Please provide both email and password." });
+  }
+
+  const q = "SELECT * FROM users WHERE email = ?";
+  db.query(q, [email], async (err, data) => {
+    if (err) return res.status(500).json({ error: "Database authentication query error." });
+    if (data.length === 0) return res.status(404).json({ error: "Account does not exist!" });
+
+    const user = data[0];
+    
+    // Compare incoming plain password with the secure hashed string in DB
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ error: "Wrong email or password combo!" });
+    }
+
+    // Return session variables (excluding password for application safety)
+    return res.status(200).json({
+      success: true,
+      message: "Logged in successfully!",
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        address: user.address,
+        phone: user.phone
+      }
+    });
   });
 });
 

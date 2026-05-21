@@ -16,6 +16,8 @@ import ReviewsPage from './pages/ReviewsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import SuccessPage from './pages/SuccessPage'; 
 import ScrollToTop from "./components/ScrollToTop";
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -154,6 +156,10 @@ function App() {
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/success" element={<SuccessPage />} />
+
+          {/* 🎯 Authentication Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </div>
 
