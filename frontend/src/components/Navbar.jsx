@@ -90,9 +90,21 @@ export default function Navbar() {
         {/* 🎯 DYNAMIC RENDERING BLOCK BASED ON LOGIN STATUS */}
         {storedUser ? (
           <div className="flex items-center gap-4">
+            
+            {/* 👑 ROLE PROTECTION: Only visible if the logged-in account has an 'admin' role */}
+            {storedUser.role === 'admin' && (
+              <button 
+                onClick={() => handleCleanNavigate('/admin')}
+                className="bg-[#E94E77] hover:bg-pink-600 text-white px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95"
+              >
+                👋 Admin
+              </button>
+            )}
+
             <span className="text-xs font-bold text-pink-200 uppercase tracking-wider bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/50">
               👋 {storedUser.full_name ? storedUser.full_name.split(' ')[0] : 'User'}
             </span>
+            
             <button 
               onClick={handleLogout}
               className="bg-transparent border border-white/40 hover:border-white hover:bg-white hover:text-[#7A231E] text-white px-4 py-1.5 rounded-xl font-bold text-xs transition-all active:scale-95"

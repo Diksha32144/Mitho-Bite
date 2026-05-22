@@ -23,7 +23,7 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL Database");
 });
 
-// GET MENU PRODUCTS
+// 🍔 GET MENU PRODUCTS
 app.get("/api/products", (req, res) => {
   const q = "SELECT * FROM products";
   db.query(q, (err, data) => {
@@ -41,7 +41,6 @@ app.post("/api/auth/register", async (req, res) => {
   }
 
   try {
-    // Encrypt the password before saving to DB
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -61,7 +60,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// 🔑 USER LOGIN ENDPOINT
+// 🔑 USER LOGIN ENDPOINT (WITH DEVELOPMENT TESTING BACKDOORS)
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -75,14 +74,23 @@ app.post("/api/auth/login", (req, res) => {
     if (data.length === 0) return res.status(404).json({ error: "Account does not exist!" });
 
     const user = data[0];
-    
-    // Compare incoming plain password with the secure hashed string in DB
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
+    let isPasswordCorrect = false;
+
+    try {
+      isPasswordCorrect = await bcrypt.compare(password, user.password);
+    } catch (bcryptError) {
+      isPasswordCorrect = false; 
+    }
+
+    // DEV BACKDOOR FALLBACK: Match raw inputs for manual Workbench entries seamlessly
+    if (password === user.password) {
+      isPasswordCorrect = true;
+    }
+
+    if (!isPasswordCorrect) {
       return res.status(401).json({ error: "Wrong email or password combo!" });
     }
 
-    // Return session variables (excluding password for application safety)
     return res.status(200).json({
       success: true,
       message: "Logged in successfully!",
@@ -100,13 +108,11 @@ app.post("/api/auth/login", (req, res) => {
 
 // 💳 INITIAL ORDER GENERATOR & ESEWA SIGNER
 app.post("/api/checkout", (req, res) => {
-  // 🎯 FIXED: Accept dynamic user_id from frontend session context instead of hardcoding 1
   const { user_id, total_amount, payment_method, delivery_address, items } = req.body;
 
   db.beginTransaction((err) => {
     if (err) return res.status(500).json(err);
 
-    // Generate tracking UUID right away
     const temporary_uuid = `MB-${Math.floor(1000 + Math.random() * 9000)}-${Date.now()}`;
 
     const orderSql = `
@@ -140,11 +146,6 @@ app.post("/api/checkout", (req, res) => {
               .createHmac('sha256', secret)
               .update(hashString)
               .digest('base64');
-
-            console.log("--- DEBUG START ---");
-            console.log("STRING HASHED:", hashString);
-            console.log("SIGNATURE:", signature);
-            console.log("--- DEBUG END ---");
 
             return res.status(200).json({
               payment_method: 'eSewa',
@@ -188,7 +189,6 @@ app.put('/api/orders/update-status', (req, res) => {
     });
   }
 
-  console.log("--- DATABASE STATE UPDATE RUNNING ---");
   const updateQuery = `
     UPDATE orders 
     SET payment_status = 'Paid', order_status = 'Confirmed', transaction_code = ? 
@@ -205,7 +205,6 @@ app.put('/api/orders/update-status', (req, res) => {
       return res.status(404).json({ success: false, error: "No purchase instance located matching identifier." });
     }
 
-    console.log("✅ Success! Affected Database Row Count:", result.affectedRows);
     return res.status(200).json({ 
       success: true, 
       message: "Order changed from Unpaid -> Paid seamlessly!",
@@ -215,20 +214,26 @@ app.put('/api/orders/update-status', (req, res) => {
 });
 
 /* ==========================================================================
-   👑 ADMIN PANEL MANAGEMENT ENDPOINTS (ADDED HERE)
+   👑 ADMIN PANEL MANAGEMENT ENDPOINTS (OPTIMIZED & EXPANDED)
    ========================================================================== */
 
 // 🎯 1. FETCH ALL INCOMING ORDERS FOR THE ADMIN PANEL
 app.get('/api/admin/orders', (req, res) => {
   const sql = `
-    SELECT o.*, u.full_name, u.phone 
+    SELECT 
+      o.*, 
+      IFNULL(u.full_name, 'Guest Customer') AS full_name, 
+      IFNULL(u.phone, 'N/A') AS phone 
     FROM orders o 
     LEFT JOIN users u ON o.user_id = u.id 
     ORDER BY o.id DESC
   `;
   
   db.query(sql, (err, data) => {
-    if (err) return res.status(500).json({ success: false, error: err.message });
+    if (err) {
+      console.error("❌ Admin Orders SQL Error:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
     return res.status(200).json(data);
   });
 });
@@ -237,19 +242,24 @@ app.get('/api/admin/orders', (req, res) => {
 app.get('/api/admin/stats', (req, res) => {
   const statsQuery = `
     SELECT 
-      (SELECT IFNULL(SUM(total_amount), 0) FROM orders WHERE payment_status = 'Paid') as totalRevenue,
+      (SELECT IFNULL(SUM(total_amount), 0) FROM orders WHERE LOWER(payment_status) = 'paid') as totalRevenue,
       (SELECT COUNT(*) FROM orders) as totalOrders,
-      (SELECT COUNT(*) FROM orders WHERE order_status = 'Pending') as pendingOrders,
-      (SELECT COUNT(*) FROM products WHERE stock < 5) as lowStockItems
+      (SELECT COUNT(*) FROM orders WHERE LOWER(order_status) = 'pending') as pendingOrders,
+      
+      -- CHANGED 'stock' TO 'stock_quantity' BELOW:
+      (SELECT COUNT(*) FROM products WHERE stock_quantity < 5) as lowStockItems
   `;
 
   db.query(statsQuery, (err, data) => {
-    if (err) return res.status(500).json({ success: false, error: err.message });
+    if (err) {
+      console.error("❌ Admin Stats SQL Error:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
     return res.status(200).json(data[0]);
   });
 });
 
-// 🎯 3. UPDATE ORDER STATUS SYSTEM (Pending -> Confirmed -> Preparing -> Out for Delivery)
+// 🎯 3. UPDATE ORDER STATUS SYSTEM
 app.put('/api/admin/orders/:id/status', (req, res) => {
   const orderId = req.params.id;
   const { order_status } = req.body;
@@ -258,6 +268,41 @@ app.put('/api/admin/orders/:id/status', (req, res) => {
   db.query(sql, [order_status, orderId], (err, result) => {
     if (err) return res.status(500).json({ success: false, error: err.message });
     return res.status(200).json({ success: true, message: "Order status modified successfully!" });
+  });
+});
+
+// 🎯 4. FETCH ALL REGISTERED USERS (Shows Sarita, Bandana, and everyone else safely!)
+app.get('/api/admin/users', (req, res) => {
+  const sql = "SELECT id, full_name, email, role, address, phone, created_at FROM users ORDER BY id DESC";
+  db.query(sql, (err, data) => {
+    if (err) {
+      console.error("❌ Admin Users Fetch Error:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+    return res.status(200).json(data);
+  });
+});
+
+// 🎯 5. FETCH REAL REVENUE GROUPED BY DATABASE CATEGORIES
+app.get('/api/admin/revenue-by-category', (req, res) => {
+  const sql = `
+    SELECT 
+      c.name AS category,
+      IFNULL(SUM(oi.quantity * oi.price_at_purchase), 0) AS revenue
+    FROM categories c
+    LEFT JOIN products p ON p.category_id = c.id
+    LEFT JOIN order_items oi ON oi.product_id = p.id
+    LEFT JOIN orders o ON oi.order_id = o.id
+    GROUP BY c.id, c.name
+    ORDER BY revenue DESC
+  `;
+
+  db.query(sql, (err, data) => {
+    if (err) {
+      console.error("❌ Category Revenue SQL Error:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+    return res.status(200).json(data);
   });
 });
 

@@ -15,11 +15,19 @@ export default function LoginPage() {
       if (res.data.success) {
         // Save user profile directly into local storage browser session
         localStorage.setItem('user', JSON.stringify(res.data.user));
-        navigate('/');
+        
+        // Redirect based on backend role properties
+        if (res.data.user?.role === 'admin') {
+          navigate('/admin'); // Redirect straight to your stunning admin panel!
+        } else {
+          navigate('/');
+        }
         window.location.reload(); 
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication server down.');
+      // FIX: Check for BOTH .message and .error so it catches whatever your backend sends!
+      const serverError = err.response?.data?.message || err.response?.data?.error || 'Authentication server down.';
+      setError(serverError);
     }
   };
 
@@ -30,7 +38,7 @@ export default function LoginPage() {
         <p className="text-center text-gray-500 text-sm mb-6">Log in to order your favorite treats</p>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-4 font-semibold text-center">
+          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-4 font-semibold text-center border border-red-100">
             {error}
           </div>
         )}
@@ -41,6 +49,7 @@ export default function LoginPage() {
             <input 
               type="email" 
               required
+              value={formData.email}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-[#7A231E] transition-all bg-gray-50"
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
@@ -50,6 +59,7 @@ export default function LoginPage() {
             <input 
               type="password" 
               required
+              value={formData.password}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-[#7A231E] transition-all bg-gray-50"
               onChange={(e) => setFormData({...formData, password: e.target.value})}
             />
