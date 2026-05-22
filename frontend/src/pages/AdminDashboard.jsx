@@ -13,10 +13,13 @@ import {
   Loader2,
   CircleDollarSign,
   Clock,
-  AlertTriangle,
-  Trash2,
-  Edit3
+  AlertTriangle
 } from 'lucide-react';
+
+// 📂 Externalized Sub-Workspace Components
+import ProductManagement from './ProductManagement';
+import OrderManagement from './OrderManagement';
+import StockManagement from './StockManagement';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -29,7 +32,7 @@ export default function AdminDashboard() {
     lowStockItems: 0
   });
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]); // 🌟 New State for Real-Time Inventory
+  const [products, setProducts] = useState([]); // 🌟 Live Product Pipeline Route
   const [categoryRevenue, setCategoryRevenue] = useState([]); 
   const [adminInfo, setAdminInfo] = useState({ full_name: 'Admin User', email: 'admin@gmail.com' });
 
@@ -57,7 +60,7 @@ export default function AdminDashboard() {
           axios.get('http://localhost:8800/api/admin/stats'),
           axios.get('http://localhost:8800/api/admin/orders'),
           axios.get('http://localhost:8800/api/admin/revenue-by-category'),
-          axios.get('http://localhost:8800/api/products') // 🌟 Live Product Pipeline Route
+          axios.get('http://localhost:8800/api/products') 
         ]);
         setStats(statsRes.data);
         setOrders(ordersRes.data);
@@ -335,157 +338,17 @@ export default function AdminDashboard() {
 
           {/* 📦 CONDITION B: RENDER PRODUCTS PANEL WORKSPACE */}
           {activeTab === 'Products' && (
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Menu Inventory</h3>
-                  <p className="text-xs text-gray-400 font-semibold mt-0.5">Create, adjust, and review Mitho_Bite store offerings.</p>
-                </div>
-                <button className="bg-[#E94E77] hover:bg-pink-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md uppercase tracking-wider">
-                  + Add Product
-                </button>
-              </div>
-
-              <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-black uppercase tracking-wider text-gray-400">
-                      <th className="p-4">Item Name</th>
-                      <th className="p-4">Category</th>
-                      <th className="p-4">Base Price</th>
-                      <th className="p-4 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm divide-y divide-gray-50">
-                    {products.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50/50 transition-colors font-medium text-gray-700">
-                        <td className="p-4 font-black text-gray-900">{item.name}</td>
-                        <td className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wide">{item.category || 'General'}</td>
-                        <td className="p-4 font-bold text-gray-900">Rs. {Number(item.price).toLocaleString()}</td>
-                        <td className="p-4 flex items-center justify-center gap-3">
-                          <button className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
-                            <Edit3 size={15} />
-                          </button>
-                          <button className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50">
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {products.length === 0 && (
-                      <tr className="text-gray-400 text-xs font-bold uppercase tracking-wider text-center">
-                        <td colSpan="4" className="p-12">No products loaded yet from database inventory.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ProductManagement products={products} setProducts={setProducts} />
           )}
 
           {/* 📋 CONDITION C: RENDER HISTORIC ORDERS WORKSPACE */}
           {activeTab === 'Orders' && (
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Transaction Ledgers</h3>
-                <p className="text-xs text-gray-400 font-semibold mt-0.5">Monitor client payment methods and process kitchen order dispatch status updates.</p>
-              </div>
-
-              <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-black uppercase tracking-wider text-gray-400">
-                      <th className="p-4">Order ID</th>
-                      <th className="p-4">Customer</th>
-                      <th className="p-4">Method</th>
-                      <th className="p-4">Total Amount</th>
-                      <th className="p-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 text-sm">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="p-4 font-black text-gray-900">MB-2026-00{order.id}</td>
-                        <td className="p-4 font-bold text-gray-600">{order.full_name}</td>
-                        <td className="p-4 text-xs font-black text-gray-500 uppercase">{order.payment_method}</td>
-                        <td className="p-4 font-black text-gray-900">Rs. {Number(order.total_amount).toLocaleString()}</td>
-                        <td className="p-4">
-                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${getStatusColorStyles(order.order_status)}`}>
-                            {order.order_status || 'Pending'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {orders.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="p-8 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                          No historic orders loaded.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <OrderManagement orders={orders} setOrders={setOrders} />
           )}
 
           {/* ⚠️ CONDITION D: RENDER STOCK ALERT CONTROL WORKSPACE */}
           {activeTab === 'Stock' && (
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Ingredients & Inventory Stock Alerts</h3>
-                <p className="text-xs text-gray-400 font-semibold mt-0.5">Automated reorder triggers safeguarding continuous kitchen production.</p>
-              </div>
-
-              {stats.lowStockItems > 0 ? (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700">
-                  <AlertTriangle size={20} className="shrink-0" />
-                  <p className="text-xs font-bold">
-                    Attention needed! Your database reports <span className="underline font-black">{stats.lowStockItems} items</span> are falling below safety thresholds.
-                  </p>
-                </div>
-              ) : (
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-700">
-                  <Boxes size={20} className="shrink-0" />
-                  <p className="text-xs font-bold">All item stocks are currently healthy and well supplied.</p>
-                </div>
-              )}
-
-              {/* Dynamic stock evaluation grid using stock property values */}
-              <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-black uppercase tracking-wider text-gray-400">
-                      <th className="p-4">Menu Item</th>
-                      <th className="p-4">Stock Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm divide-y divide-gray-50">
-                    {products.map((item) => {
-                      // Custom conditional metrics (assuming database records tracking counts)
-                      const isLow = item.stock <= 10; 
-                      return (
-                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4 font-bold text-gray-800">{item.name}</td>
-                          <td className="p-4">
-                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase ${
-                              isLow ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                            }`}>
-                              {item.stock !== undefined ? `${item.stock} Units left` : 'Healthy'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {products.length === 0 && (
-                      <tr className="text-gray-400 text-xs font-bold uppercase tracking-wider text-center">
-                        <td colSpan="2" className="p-12">No item quantities tracked inside database files yet.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <StockManagement products={products} stats={stats} />
           )}
 
         </div>

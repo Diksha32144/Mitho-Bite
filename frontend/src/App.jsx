@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'; // 🎯 Added useNavigate & useLocation
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 
 // Layout Components
@@ -18,7 +18,7 @@ import SuccessPage from './pages/SuccessPage';
 import ScrollToTop from "./components/ScrollToTop";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/AdminDashboard'; // 🍔 Your updated master admin panel
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -44,8 +44,8 @@ function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
   
-  const navigate = useNavigate(); // 🎯 Hooks for smart path jumping
-  const location = useLocation(); // 🎯 Hooks to watch current active URL location
+  const navigate = useNavigate(); 
+  const location = useLocation(); 
 
   const imageLib = {
     'Classic Chocolate Cake': cake1,
@@ -77,7 +77,6 @@ function App() {
       .catch(err => console.error("Database connection error:", err));
   }, []);
 
-  // 🎯 SMART NAV HANDLER: If clicked elsewhere, shifts path back to menu view smoothly
   const handleFooterCategoryClick = (category) => {
     setActiveCategory(category);
     if (location.pathname !== '/') {
@@ -98,13 +97,19 @@ function App() {
         return dbCat === selectedCat;
       });
 
-  // Hides footer footprint explicitly on checkout states to prevent overlay click hijacking
-  const hideFooter = location.pathname === '/success' || location.pathname === '/checkout';
+  // 🎯 FIXED HIDEFOOTER LOGIC: Hides footer on Success, Checkout, and ALL /admin pages
+  const hideFooter = 
+    location.pathname === '/success' || 
+    location.pathname === '/checkout' || 
+    location.pathname.startsWith('/admin');
+
+  // 🎯 HIDE NAVBAR FOR ADMINS TOO: Keeps the admin layout clean without public header
+  const showNavbar = !location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen font-sans bg-gray-50 flex flex-col justify-between">
       <div>
-        <Navbar />
+        {showNavbar && <Navbar />}
         <ScrollToTop /> 
 
         <Routes>
@@ -158,15 +163,16 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/success" element={<SuccessPage />} />
 
-          {/* 🎯 Authentication Routes */}
+          {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          <Route path="/admin" element={<AdminDashboard/>}/>
+          {/* 🎯 CHANGED TO WILDCARD ROUTE TO SUPPORT SUB-TABS SEAMLESSLY */}
+          <Route path="/admin/*" element={<AdminDashboard/>}/>
         </Routes>
       </div>
 
-      {/* 🎯 CONDITIONALLY RENDERED FOOTER CONTAINER */}
+      {/* CONDITIONALLY RENDERED FOOTER CONTAINER */}
       {!hideFooter && (
         <footer className="bg-[#432818] text-white pt-20 pb-10 mt-auto">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -214,5 +220,4 @@ function App() {
   );
 }
 
-// Wrap export cleanly to ensure useLocation hook functions contextually
 export default App;
