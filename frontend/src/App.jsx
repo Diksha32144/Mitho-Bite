@@ -18,6 +18,7 @@ import SuccessPage from './pages/SuccessPage';
 import ScrollToTop from "./components/ScrollToTop";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -160,6 +161,8 @@ function App() {
           {/* 🎯 Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
+          <Route path="/admin" element={<AdminDashboard/>}/>
         </Routes>
       </div>
 

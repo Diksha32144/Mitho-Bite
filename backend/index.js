@@ -23,7 +23,7 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL Database");
 });
 
-//  GET MENU PRODUCTS
+// GET MENU PRODUCTS
 app.get("/api/products", (req, res) => {
   const q = "SELECT * FROM products";
   db.query(q, (err, data) => {
@@ -100,7 +100,8 @@ app.post("/api/auth/login", (req, res) => {
 
 // 💳 INITIAL ORDER GENERATOR & ESEWA SIGNER
 app.post("/api/checkout", (req, res) => {
-  const { total_amount, payment_method, delivery_address, items } = req.body;
+  // 🎯 FIXED: Accept dynamic user_id from frontend session context instead of hardcoding 1
+  const { user_id, total_amount, payment_method, delivery_address, items } = req.body;
 
   db.beginTransaction((err) => {
     if (err) return res.status(500).json(err);
@@ -111,10 +112,10 @@ app.post("/api/checkout", (req, res) => {
     const orderSql = `
       INSERT INTO orders 
       (user_id, total_amount, payment_method, payment_status, order_status, delivery_address, transaction_uuid) 
-      VALUES (1, ?, ?, 'Unpaid', 'Pending', ?, ?)
+      VALUES (?, ?, ?, 'Unpaid', 'Pending', ?, ?)
     `;
     
-    db.query(orderSql, [total_amount, payment_method, delivery_address, temporary_uuid], (err, result) => {
+    db.query(orderSql, [user_id || 1, total_amount, payment_method, delivery_address, temporary_uuid], (err, result) => {
       if (err) return db.rollback(() => res.status(500).json(err));
 
       const orderId = result.insertId;
@@ -164,7 +165,6 @@ app.post("/api/checkout", (req, res) => {
           }
 
           // ────────────── Pathway B: Cash on Delivery Verification ──────────────
-          // 🎯 FIXED: Explicitly return the structural keys your frontend expects to keep logic uniform
           return res.status(200).json({ 
             success: true, 
             payment_method: 'COD',
@@ -191,7 +191,7 @@ app.put('/api/orders/update-status', (req, res) => {
   console.log("--- DATABASE STATE UPDATE RUNNING ---");
   const updateQuery = `
     UPDATE orders 
-    SET payment_status = 'Paid', transaction_code = ? 
+    SET payment_status = 'Paid', order_status = 'Confirmed', transaction_code = ? 
     WHERE transaction_uuid = ?
   `;
 
@@ -211,6 +211,53 @@ app.put('/api/orders/update-status', (req, res) => {
       message: "Order changed from Unpaid -> Paid seamlessly!",
       affectedRows: result.affectedRows
     });
+  });
+});
+
+/* ==========================================================================
+   👑 ADMIN PANEL MANAGEMENT ENDPOINTS (ADDED HERE)
+   ========================================================================== */
+
+// 🎯 1. FETCH ALL INCOMING ORDERS FOR THE ADMIN PANEL
+app.get('/api/admin/orders', (req, res) => {
+  const sql = `
+    SELECT o.*, u.full_name, u.phone 
+    FROM orders o 
+    LEFT JOIN users u ON o.user_id = u.id 
+    ORDER BY o.id DESC
+  `;
+  
+  db.query(sql, (err, data) => {
+    if (err) return res.status(500).json({ success: false, error: err.message });
+    return res.status(200).json(data);
+  });
+});
+
+// 🎯 2. METRICS QUERY: For Dashboard Overview Card Summaries
+app.get('/api/admin/stats', (req, res) => {
+  const statsQuery = `
+    SELECT 
+      (SELECT IFNULL(SUM(total_amount), 0) FROM orders WHERE payment_status = 'Paid') as totalRevenue,
+      (SELECT COUNT(*) FROM orders) as totalOrders,
+      (SELECT COUNT(*) FROM orders WHERE order_status = 'Pending') as pendingOrders,
+      (SELECT COUNT(*) FROM products WHERE stock < 5) as lowStockItems
+  `;
+
+  db.query(statsQuery, (err, data) => {
+    if (err) return res.status(500).json({ success: false, error: err.message });
+    return res.status(200).json(data[0]);
+  });
+});
+
+// 🎯 3. UPDATE ORDER STATUS SYSTEM (Pending -> Confirmed -> Preparing -> Out for Delivery)
+app.put('/api/admin/orders/:id/status', (req, res) => {
+  const orderId = req.params.id;
+  const { order_status } = req.body;
+
+  const sql = "UPDATE orders SET order_status = ? WHERE id = ?";
+  db.query(sql, [order_status, orderId], (err, result) => {
+    if (err) return res.status(500).json({ success: false, error: err.message });
+    return res.status(200).json({ success: true, message: "Order status modified successfully!" });
   });
 });
 
