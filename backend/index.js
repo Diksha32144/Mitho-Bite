@@ -213,6 +213,20 @@ app.put('/api/orders/update-status', (req, res) => {
   });
 });
 
+// 🚚 USER TRACKING ROUTE: FETCH TRANSACTION RECORDS FOR A SPECIFIC CLIENT
+app.get('/api/users/:userId/orders', (req, res) => {
+  const { userId } = req.params;
+  const q = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("❌ Tracking Fetch Error:", err);
+      return res.status(500).json({ error: "Failed to fetch customer tracking logs." });
+    }
+    return res.status(200).json(data);
+  });
+});
+
 /* ==========================================================================
    👑 ADMIN PANEL MANAGEMENT ENDPOINTS (OPTIMIZED & EXPANDED)
    ========================================================================== */
@@ -271,7 +285,7 @@ app.put('/api/admin/orders/:id/status', (req, res) => {
   });
 });
 
-// 🎯 4. FETCH ALL REGISTERED USERS (Shows Sarita, Bandana, and everyone else safely!)
+// 🎯 4. FETCH ALL REGISTERED USERS
 app.get('/api/admin/users', (req, res) => {
   const sql = "SELECT id, full_name, email, role, address, phone, created_at FROM users ORDER BY id DESC";
   db.query(sql, (err, data) => {

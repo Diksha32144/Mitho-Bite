@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, User } from 'lucide-react';
+import { ShoppingCart, User, ClipboardList } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import logo from '../assets/logo.png'; 
 
@@ -69,6 +69,17 @@ export default function Navbar() {
         >
           Reviews
         </button>
+
+        {/* 🚚 DYNAMIC ORDER TRACKING NAVIGATION TAB */}
+        {storedUser && (
+          <button 
+            onClick={() => handleCleanNavigate('/track-orders')} 
+            className="text-[#E94E77] bg-rose-50 hover:bg-white hover:text-[#7A231E] px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-widest font-extrabold text-xs shadow-sm border border-transparent"
+          >
+            <ClipboardList size={14} />
+            Track Orders
+          </button>
+        )}
       </div>
 
       {/* RIGHT: ICONS & DYNAMIC AUTH BUTTONS */}

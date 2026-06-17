@@ -18,7 +18,8 @@ import SuccessPage from './pages/SuccessPage';
 import ScrollToTop from "./components/ScrollToTop";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import AdminDashboard from './pages/AdminDashboard'; // 🍔 Your updated master admin panel
+import AdminDashboard from './pages/AdminDashboard'; 
+import OrderTracking from './pages/OrderTracking';
 
 // Assets
 import wavyBG from './assets/landing-bg.png'; 
@@ -162,6 +163,7 @@ function App() {
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/success" element={<SuccessPage />} />
+          <Route path="/track-orders" element={<OrderTracking />} />
 
           {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
