@@ -12,6 +12,7 @@ import ProductCard from './components/ProductCard';
 import ServiceFeatures from './components/ServiceFeatures';
 import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage'; 
+import ProductDetailPage from './pages/ProductDetailPage'; 
 import ReviewsPage from './pages/ReviewsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import SuccessPage from './pages/SuccessPage'; 
@@ -41,6 +42,8 @@ import cookies1 from './assets/choco cookies.png';
 import cookies2 from './assets/oatmeal.png';
 import cookies3 from './assets/peanut.png';
 
+const menuOrder = ['Cakes', 'Pastries', 'Donuts', 'Ice Cream', 'Cookies'];
+
 function App() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -66,17 +69,64 @@ function App() {
     'Peanut Butter Crunch': cookies3,
   };
 
-  useEffect(() => {
-    axios.get('http://localhost:8800/api/products')
-      .then(res => {
-        const dataWithImages = res.data.map(item => ({
-          ...item,
-          image: imageLib[item.name] || 'https://via.placeholder.com/300' 
-        }));
-        setProducts(dataWithImages);
-      })
-      .catch(err => console.error("Database connection error:", err));
-  }, []);
+  const getCategoryName = (id) => {
+    const cats = { 
+      '1': 'Cakes', 
+      '2': 'Donuts', 
+      '3': 'Pastries', 
+      '4': 'Ice Cream', 
+      '5': 'Cookies' 
+    };
+    return cats[String(id)] || 'Unassigned';
+  };
+
+useEffect(() => {
+  axios.get('http://localhost:8800/api/products')
+    .then(res => {
+      const processedData = res.data.map(item => {
+        let catId = 0;
+        const name = item.name.toLowerCase();
+        
+        // Categorization logic
+    // 1. Prioritize Cookies: Catch "cookie" or "choco chip" specifically
+  if (name.includes('cookie') || name.includes('choco chip') || name.includes('oatmeal') || name.includes('peanut')) {
+    catId = 5; 
+  } 
+  // 2. Cakes
+  else if (name.includes('cake') || name.includes('velvet') || name.includes('cheesecake')) {
+    catId = 1;
+  } 
+  // 3. Donuts
+  else if (name.includes('donut') || name.includes('boston') || name.includes('sprinkles')) {
+    catId = 2;
+  } 
+  // 4. Pastries
+  else if (name.includes('pastry') || name.includes('black forest') || name.includes('pineapple')) {
+    catId = 3;
+  } 
+  // 5. Ice Cream (Last, for remaining items)
+  else if (name.includes('sorbet') || name.includes('scoop') || name.includes('belgian')) {
+    catId = 4;
+  }
+        // CRITICAL: Attach the image here
+        return { 
+          ...item, 
+          category_id: catId,
+          image: imageLib[item.name] || 'https://via.placeholder.com/300'
+        };
+      });
+
+      // ... rest of your sort and setProducts logic
+      processedData.sort((a, b) => {
+        const catA = getCategoryName(a.category_id);
+        const catB = getCategoryName(b.category_id);
+        return menuOrder.indexOf(catA) - menuOrder.indexOf(catB);
+      });
+
+      setProducts(processedData);
+    })
+    .catch(err => console.error("Database connection error:", err));
+}, []);
 
   const handleFooterCategoryClick = (category) => {
     setActiveCategory(category);
@@ -90,21 +140,16 @@ function App() {
     }
   };
 
+  const normalize = (str) => String(str).toLowerCase().replace(/[-\s]/g, '');
+
   const filteredProducts = activeCategory === 'All' || activeCategory === 'All Products'
     ? products 
     : products.filter(p => {
-        const dbCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
-        const selectedCat = activeCategory.toLowerCase().replace(/[^a-z]/g, '');
-        return dbCat === selectedCat;
+        const categoryName = getCategoryName(p.category_id);
+        return normalize(categoryName) === normalize(activeCategory);
       });
 
-  // 🎯 FIXED HIDEFOOTER LOGIC: Hides footer on Success, Checkout, and ALL /admin pages
-  const hideFooter = 
-    location.pathname === '/success' || 
-    location.pathname === '/checkout' || 
-    location.pathname.startsWith('/admin');
-
-  // 🎯 HIDE NAVBAR FOR ADMINS TOO: Keeps the admin layout clean without public header
+  const hideFooter = location.pathname === '/success' || location.pathname === '/checkout' || location.pathname.startsWith('/admin');
   const showNavbar = !location.pathname.startsWith('/admin');
 
   return (
@@ -112,33 +157,19 @@ function App() {
       <div>
         {showNavbar && <Navbar />}
         <ScrollToTop /> 
-
         <Routes>
           <Route path="/" element={
             <>
-              <div 
-                className="w-full"
-                style={{ 
-                  backgroundImage: `url(${wavyBG})`, 
-                  backgroundSize: 'cover', 
-                  backgroundAttachment: 'fixed' 
-                }}
-              >
+              <div className="w-full" style={{ backgroundImage: `url(${wavyBG})`, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}>
                 <Hero />
               </div>
-
               <section id="menu" className="bg-white py-24 w-full shadow-inner">
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="flex flex-col items-center mb-16">
                     <h2 className="text-5xl font-black text-gray-900 italic">Our Menu</h2>
                     <div className="h-1.5 w-24 bg-[#7A231E] mt-4 rounded-full"></div>
                   </div>
-
-                  <CategoryBar 
-                    activeCategory={activeCategory} 
-                    setActiveCategory={setActiveCategory} 
-                    />
-                
+                  <CategoryBar activeCategory={activeCategory} setActiveCategory={setActiveCategory} products={products} />
                   {filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                       {filteredProducts.map((item) => (
@@ -152,32 +183,25 @@ function App() {
                   )}
                 </div>
               </section>
-
               <Featured />
               <ServiceFeatures />
             </>
           } />
-
           <Route path="/cart" element={<CartPage />} />
           <Route path="/products" element={<ProductPage products={products} />} />
+          <Route path="/product/:id" element={<ProductDetailPage imageLib={imageLib} />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/track-orders" element={<OrderTracking />} />
-
-          {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-
-          {/* 🎯 CHANGED TO WILDCARD ROUTE TO SUPPORT SUB-TABS SEAMLESSLY */}
           <Route path="/admin/*" element={<AdminDashboard/>}/>
         </Routes>
       </div>
-
-      {/* CONDITIONALLY RENDERED FOOTER CONTAINER */}
       {!hideFooter && (
         <footer className="bg-[#432818] text-white pt-20 pb-10 mt-auto">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="space-y-4">
               <h3 className="text-3xl font-black italic">Mitho Bite</h3>
               <p className="text-gray-400 text-sm leading-relaxed">

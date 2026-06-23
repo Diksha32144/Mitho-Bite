@@ -1,54 +1,47 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { Search, Star, ShoppingCart, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // 🚀 Added for detail page routing
 
 export default function ProductPage({ products }) {
   const { addToCart } = useCart();
+  const navigate = useNavigate(); // 🚀 Initialize navigation hook
   const [searchTerm, setSearchTerm] = useState('');
   
   // FIX 1: Change default state to 'All' to match your App.jsx
   const [selectedCategory, setSelectedCategory] = useState('All'); 
   const [addedItems, setAddedItems] = useState({});
 
-  const categories = [
-  { name: 'All', count: products.length }, 
-  { 
-    name: 'Cakes', 
-    count: products.filter(p => p.category?.trim() === 'Cakes').length 
-  },
-  { 
-    name: 'Donuts', 
-    count: products.filter(p => p.category?.trim() === 'Donuts').length 
-  },
-  { 
-    name: 'Pastries', 
-    count: products.filter(p => p.category?.trim() === 'Pastries').length 
-  },
-  { 
-    name: 'Ice Cream', 
-    // This looks for "Ice-cream", "ice cream", or "icecream" in your DB
-    count: products.filter(p => p.category?.toLowerCase().replace(/[^a-z]/g, '') === 'icecream').length 
-  },
-  { 
-    name: 'Cookies', 
-    count: products.filter(p => p.category?.trim() === 'Cookies').length 
-  },
-];
+ const categories = [
+    { name: 'All', count: products.length }, 
+    { name: 'Cakes', count: products.filter(p => p.category_id === 1).length },
+    { name: 'Donuts', count: products.filter(p => p.category_id === 2).length },
+    { name: 'Pastries', count: products.filter(p => p.category_id === 3).length },
+    { name: 'Ice Cream', count: products.filter(p => p.category_id === 4).length },
+    { name: 'Cookies', count: products.filter(p => p.category_id === 5).length },
+  ];
 
-// 2. Updated Filter Logic to match the Homepage
-const filtered = products.filter(p => {
-  const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-  
-  // Normalize strings for comparison
-  const productCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
-  const selectedCat = selectedCategory.toLowerCase().replace(/[^a-z]/g, '');
-  
-  const matchesCat = selectedCategory === 'All' || productCat === selectedCat;
-  
-  return matchesSearch && matchesCat;
-});
+  // 2. Updated Filter Logic to match the Homepage
+  const filtered = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Normalize strings for comparison
+    const productCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
+    const selectedCat = selectedCategory.toLowerCase().replace(/[^a-z]/g, '');
+    
+// Inside your filtered logic in ProductPage.jsx
+const matchesCat = selectedCategory === 'All' || 
+  (selectedCategory === 'Cakes' && p.category_id === 1) ||
+  (selectedCategory === 'Donuts' && p.category_id === 2) ||
+  (selectedCategory === 'Pastries' && p.category_id === 3) ||
+  (selectedCategory === 'Ice Cream' && p.category_id === 4) ||
+  (selectedCategory === 'Cookies' && p.category_id === 5);
+    
+    return matchesSearch && matchesCat;
+  });
 
-  const handleAddToCart = (item) => {
+  const handleAddToCart = (e, item) => {
+    e.stopPropagation(); // 🚀 Prevents full card click handler from opening detail page instantly
     addToCart(item);
     setAddedItems((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
@@ -107,11 +100,14 @@ const filtered = products.filter(p => {
               </p>
             </div>
 
-            {/* FIX 3: Added a "No products found" message so the screen isn't just blank */}
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filtered.map((item) => (
-                  <div key={item.id} className="group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative">
+                  <div 
+                    key={item.id} 
+                    onClick={() => navigate(`/product/${item.id}`)} // 🚀 Route to specific item details view on click
+                    className="group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative cursor-pointer"
+                  >
                     <div className="h-64 overflow-hidden bg-gray-100">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     </div>
@@ -129,7 +125,7 @@ const filtered = products.filter(p => {
                       <div className="flex justify-between items-center">
                         <span className="text-xl font-black text-gray-900">Rs. {item.price}</span>
                         <button 
-                          onClick={() => handleAddToCart(item)}
+                          onClick={(e) => handleAddToCart(e, item)} // 🚀 Passes event through to isolate the click event
                           className={`p-3 rounded-2xl transition-all duration-300 shadow-lg ${
                             addedItems[item.id] ? 'bg-[#00D084] text-white scale-110' : 'bg-[#432818] text-white hover:bg-black'
                           }`}

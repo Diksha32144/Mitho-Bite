@@ -1,120 +1,232 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, Search, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus, X } from 'lucide-react';
+
+
 
 export default function ProductsManagement() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    name: '', description: '', price: '', stock_quantity: '', category_id: '', image: null
+  });
 
-  // 🔄 FETCH LIVE PRODUCTS FROM BACKEND
-  const fetchProducts = () => {
-    fetch('http://localhost:8800/api/products')
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error("Error fetching products:", err));
-  };
+const fetchProducts = async () => {
+  try {
+    const res = await fetch('http://localhost:8800/api/products');
+    const data = await res.json();
+    
+    // Log the data to see what we received from the API
+    console.log("DEBUG - API Data:", data);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (Array.isArray(data)) {
+      setProducts(data);
+    } else {
+      console.error("API did not return an array:", data);
+      setProducts([]);
+    }
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setProducts([]);
+  }
+};
 
-  // ❌ DELETE PRODUCT HANDLER
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this menu item?")) {
-      fetch(`http://localhost:8800/api/products/${id}`, { method: 'DELETE' })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            fetchProducts(); // Refresh list cleanly
-          } else {
-            alert(data.error);
-          }
-        });
+// Add this log at the bottom of your component, right before return
+console.log("DEBUG - Current State (products):", products);
+
+console.log("Component rendered. Current products state:", products);
+
+  // 2. Single useEffect calling the unified function
+  
+ useEffect(() => {
+  fetchProducts();
+}, []);
+
+  const categoryCounts = React.useMemo(() => {
+    const counts = { 'All': products.length, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    products.forEach(p => {
+      const catId = String(p.category_id);
+      if (counts.hasOwnProperty(catId)) {
+        counts[catId]++;
+      }
+    });
+    return counts;
+  }, [products]);
+
+ 
+
+  const cleanId = (id) => id;
+
+ const handleDelete = async (id) => {
+    // FIX 2: Ensure ID is passed correctly
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      try {
+        const res = await fetch(`http://localhost:8800/api/products/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+           fetchProducts();
+        }
+      } catch (err) {
+        console.error("Error deleting:", err);
+      }
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || String(product.category_id) === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const handleOpenModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price || '',
+        stock_quantity: product.stock_quantity || '',
+        category_id: String(product.category_id || ''),
+        image: null
+      });
+    } else {
+      setEditingProduct(null);
+      setFormData({ name: '', description: '', price: '', stock_quantity: '', category_id: '', image: null });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const uploadData = new FormData();
+    uploadData.append('name', formData.name);
+    uploadData.append('description', formData.description);
+    uploadData.append('price', formData.price);
+    uploadData.append('stock_quantity', formData.stock_quantity);
+    uploadData.append('category_id', formData.category_id);
+    if (formData.image) uploadData.append('image', formData.image);
+
+    const targetId = editingProduct ? cleanId(editingProduct.id) : null;
+    const url = targetId ? `http://localhost:8800/api/products/${targetId}` : 'http://localhost:8800/api/products';
+    
+    try {
+      const response = await fetch(url, { method: targetId ? 'PUT' : 'POST', body: uploadData });
+      if (response.ok) { setIsModalOpen(false); fetchProducts(); }
+      else { alert("Failed to save."); }
+    } catch (err) { console.error(err); }
+  };
+
+  const getCategoryName = (id) => {
+    const cats = { '1': 'Cakes', '2': 'Donuts', '3': 'Pastries', '4': 'Ice Cream', '5': 'Cookies' };
+    return cats[String(id)] || 'Unassigned';
+  };
+  
+const filteredProducts = products.filter(p => {
+    const nameMatch = searchTerm === '' || 
+      (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Ensure category comparison handles potential nulls
+    const pCat = p.category_id ? String(p.category_id) : '';
+    const categoryMatch = selectedCategory === 'All' || pCat === String(selectedCategory);
+    
+    return nameMatch && categoryMatch;
   });
 
+
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Products</h1>
-          <p className="text-sm text-gray-500">{filteredProducts.length} products in your catalog</p>
-        </div>
-        <button className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-          <Plus size={18} /> Add Product
+    <div className="p-8 bg-[#F8F9FA] min-h-screen">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-black">Products Menu</h1>
+        <button onClick={() => handleOpenModal()} className="bg-[#E94E77] text-white px-5 py-3 rounded-xl text-xs font-black uppercase">
+          <Plus size={16} className="inline mr-2"/> Add Product
         </button>
       </div>
 
-      {/* Controls Bar */}
       <div className="flex gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select 
-          className="border rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-pink-500"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="All">All Categories</option>
-          <option value="1">Cakes</option>
-          <option value="2">Donuts</option>
-          <option value="3">Pastries</option>
+        <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 p-3 rounded-xl border border-gray-200 text-sm" />
+        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="p-3 rounded-xl border border-gray-200 text-sm bg-white">
+          <option value="All">All Categories ({categoryCounts['All']})</option>
+          <option value="1">Cakes ({categoryCounts['1']})</option>
+          <option value="2">Donuts ({categoryCounts['2']})</option>
+          <option value="3">Pastries ({categoryCounts['3']})</option>
+          <option value="4">Ice Cream ({categoryCounts['4']})</option>
+          <option value="5">Cookies ({categoryCounts['5']})</option>
         </select>
       </div>
 
-      {/* Products Table Container */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b">
-              <th className="p-4">Product</th>
-              <th className="p-4">Price</th>
-              <th className="p-4">Stock</th>
-              <th className="p-4">Actions</th>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50/30">
+            <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              <th className="py-4 px-6">Image</th>
+              <th className="py-4 px-6">Product Details</th>
+              <th className="py-4 px-6">Category</th>
+              <th className="py-4 px-6">Price</th>
+              <th className="py-4 px-6">Stock</th>
+              <th className="py-4 px-6 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
-            {filteredProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50/70 transition-colors">
-                <td className="p-4 flex items-center gap-3">
-                  <img src={product.image || '/placeholder-bakery.png'} alt={product.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
-                  <div>
-                    <div className="font-semibold text-gray-800">{product.name}</div>
-                    <div className="text-xs text-gray-400 max-w-xs truncate">{product.description}</div>
-                  </div>
+          <tbody className="divide-y divide-gray-50 text-sm">
+            {filteredProducts.map((product)=> (
+              <tr key={product.id}>
+                <td className="py-4 px-6">
+                  <img 
+  src={product.image ? `http://localhost:8800/images/${product.image}` : '/default-product.png'}
+  onError={(e) => { e.target.src = '/default-product.png'; }}
+  className="w-12 h-12 object-cover rounded-lg" 
+  alt={product.name} 
+/>
                 </td>
-                <td className="p-4 font-semibold text-gray-700">Rs. {Number(product.price).toLocaleString()}</td>
-                <td className="p-4">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    product.stock_quantity > 10 ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-700'
-                  }`}>
-                    {product.stock_quantity ?? 0} units
-                  </span>
+                <td className="py-4 px-6">
+                  <div className="font-black text-gray-900">{product.name}</div>
+                  <div className="text-xs text-gray-400 truncate max-w-xs">{product.description}</div>
                 </td>
-                <td className="p-4 text-gray-500">
-                  <div className="flex gap-3">
-                    <button className="hover:text-pink-600 transition-colors"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(product.id)} className="hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
-                  </div>
+                <td className="py-4 px-6">
+                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-[10px] font-black uppercase">{getCategoryName(product.category_id)}</span>
+                </td>
+                <td className="py-4 px-6 font-black">Rs. {Number(product.price || 0).toLocaleString()}</td>
+                <td className="py-4 px-6 text-emerald-600 font-bold">{product.stock_quantity} units</td>
+                <td className="py-4 px-6 text-center">
+                  <button onClick={() => handleOpenModal(product)} className="text-gray-400 hover:text-blue-600 mr-3"><Pencil size={14} /></button>
+                  <button onClick={() => handleDelete(product.id)} className="text-gray-400 hover:text-rose-600"><Trash2 size={14} /></button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+
+            
+      <button 
+        onClick={() => setIsModalOpen(false)} 
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors"
+      >
+        <X size={20} />
+      </button>
+
+            <h2 className="font-black text-lg mb-4">{editingProduct ? 'Edit Item' : 'New Item'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input type="text" placeholder="Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-xs" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="number" placeholder="Price" required value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-xs" />
+                <input type="number" placeholder="Stock" required value={formData.stock_quantity} onChange={(e) => setFormData({...formData, stock_quantity: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-xs" />
+              </div>
+              <select required value={formData.category_id} onChange={(e) => setFormData({...formData, category_id: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-xs">
+                <option value="" disabled>Select a Category</option>
+                <option value="1">Cakes</option>
+                <option value="2">Donuts</option>
+                <option value="3">Pastries</option>
+                <option value="4">Ice Cream</option>
+                <option value="5">Cookies</option>
+              </select>
+              <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-xs" />
+              <input type="file" onChange={(e) => setFormData({...formData, image: e.target.files[0]})} className="w-full text-xs" />
+              <button type="submit" className="w-full bg-[#E94E77] text-white p-3 rounded-xl font-bold text-xs">Save</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

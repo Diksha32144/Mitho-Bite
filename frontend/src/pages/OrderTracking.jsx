@@ -9,13 +9,16 @@ import {
   Truck, 
   ArrowLeft, 
   Loader2,
-  MapPin
+  MapPin,
+  User,
+  Mail
 } from 'lucide-react';
 
 export default function OrderTracking() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     // 🔐 Check client identity session data
@@ -26,22 +29,23 @@ export default function OrderTracking() {
       return;
     }
     const userObj = JSON.parse(storedSession);
+    setCurrentUser(userObj);
 
     const fetchUserOrders = async () => {
-      try {
-        const res = await axios.get(`http://localhost:8800/api/users/${userObj.id}/orders`);
-        setOrders(res.data || []);
-      } catch (err) {
-        console.error("Tracking connection breakdown:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    const res = await axios.get(`http://localhost:8800/api/users/${userObj.id}/orders`);
+    setOrders(res.data || []);
+  } catch (err) {
+    console.error("Tracking connection breakdown:", err);
+  } finally {
+    // FIX: Call the setter function instead of the state variable itself
+    setLoading(false); 
+  }
+};
 
     fetchUserOrders();
   }, [navigate]);
 
-  // Maps order_status strings from image_ebad29.png to visual pipeline steps
   // Maps order_status strings to visual pipeline steps perfectly
   const getStatusStep = (status) => {
     switch (status?.toLowerCase()) {
@@ -100,6 +104,7 @@ export default function OrderTracking() {
         ) : (
           orders.map((order) => {
             const currentStep = getStatusStep(order.order_status);
+            const isPaid = order.payment_status?.toLowerCase() === 'paid';
             
             return (
               <div key={order.id} className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6 transition-all hover:border-gray-200">
@@ -110,11 +115,24 @@ export default function OrderTracking() {
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Order Reference</span>
                     <h3 className="text-base font-black text-gray-900">MB-2026-00{order.id}</h3>
                   </div>
+                  
                   <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-gray-400 block mb-1">Payment Status</span>
+                      <span className={`text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
+                        isPaid 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                          : 'bg-amber-50 text-amber-600 border-amber-200'
+                      }`}>
+                        ● {order.payment_status || 'Unpaid'}
+                      </span>
+                    </div>
+
                     <div className="text-right space-y-0.5">
                       <span className="text-xs font-bold text-gray-400 block">Total Amount</span>
                       <span className="text-sm font-black text-gray-900">Rs. {Number(order.total_amount).toLocaleString()}</span>
                     </div>
+
                     <div className="text-right space-y-0.5">
                       <span className="text-xs font-bold text-gray-400 block">Payment Mode</span>
                       <span className="text-xs font-black text-[#E94E77] bg-rose-50 border border-rose-100/50 px-2.5 py-1 rounded-lg uppercase tracking-wide">
@@ -124,12 +142,37 @@ export default function OrderTracking() {
                   </div>
                 </div>
 
-                {/* DELIVERY ADDRESS SHOWCASE */}
-                <div className="flex items-start gap-2.5 bg-gray-50 p-3.5 rounded-2xl border border-gray-100/50">
-                  <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shipping To</span>
-                    <p className="text-xs font-bold text-gray-700">{order.delivery_address}</p>
+                {/* 🚚 DETAILS GRID (ADDRESS, NAME, & EMAIL) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100/50">
+                  {/* Shipping Address Column */}
+                  <div className="flex items-start gap-2.5">
+                    <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Shipping To</span>
+                      <p className="text-xs font-bold text-gray-700 leading-tight">{order.delivery_address}</p>
+                    </div>
+                  </div>
+
+                  {/* Customer Name Column */}
+                  <div className="flex items-start gap-2.5 border-t md:border-t-0 md:border-l border-gray-200/60 pt-3 md:pt-0 md:pl-4">
+                    <User size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Customer Name</span>
+                      <p className="text-xs font-bold text-gray-700 leading-tight">
+                        {currentUser?.full_name || 'Customer'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Email Address Column */}
+                  <div className="flex items-start gap-2.5 border-t md:border-t-0 md:border-l border-gray-200/60 pt-3 md:pt-0 md:pl-4">
+                    <Mail size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Email Address</span>
+                      <p className="text-xs font-bold text-gray-700 leading-tight break-all">
+                        {currentUser?.email || 'N/A'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -160,9 +203,7 @@ export default function OrderTracking() {
                           }`}>
                             {node.icon}
                           </div>
-                          <span className={`text-[10px] font-black uppercase tracking-wider ${
-                            isDone ? 'text-emerald-600' : 'text-gray-400'
-                          }`}>
+                          <span className={`text-[10px] font-medium ${isDone ? 'text-emerald-600' : 'text-gray-400'}`}>
                             {node.label}
                           </span>
                         </div>

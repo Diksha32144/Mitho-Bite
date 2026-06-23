@@ -3,10 +3,23 @@ import mysql from 'mysql2';
 import cors from 'cors';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import multer from 'multer'; // 1. Import multer
+import path from 'path';
 
 const app = express();
 app.use(cors()); 
 app.use(express.json());
+app.use(express.static('public'));
+app.use('/images', express.static('public/images'));
+
+// 2. Configure Multer Storage
+const storage = multer.diskStorage({
+  destination: './public/images',
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -23,12 +36,88 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL Database");
 });
 
-// 🍔 GET MENU PRODUCTS
+
+// 🍔 ADD A NEW PRODUCT
+app.post("/api/products", upload.single('image'), (req, res) => {
+  const { name, description, price, stock_quantity, category_id } = req.body;
+  const image = req.file ? req.file.filename : null;
+
+  const sql = "INSERT INTO products (name, description, price, stock_quantity, category_id, image) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(sql, [name, description, price, stock_quantity, category_id, image], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    return res.status(201).json({ success: true });
+  });
+});
+
+// 🍔 UPDATE AN EXISTING PRODUCT
+app.put("/api/products/:id", upload.single('image'), (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, stock_quantity, category_id } = req.body;
+  
+  let sql, params;
+  if (req.file) {
+    // If a new image is uploaded, update the image field
+    sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=?, image=? WHERE id=?";
+    params = [name, description, price, stock_quantity, category_id, req.file.filename, id];
+  } else {
+    // If no new image, keep the existing one in the database
+    sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=? WHERE id=?";
+    params = [name, description, price, stock_quantity, category_id, id];
+  }
+
+  db.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    return res.status(200).json({ success: true });
+  });
+});
+// 🍔 GET ALL PRODUCTS GROUPED BY CATEGORY
 app.get("/api/products", (req, res) => {
-  const q = "SELECT * FROM products";
+  // Use explicit column selection to avoid ID conflicts from joins
+  const q = "SELECT id, name, description, price, stock_quantity, category_id, image FROM products ORDER BY category_id ASC, name ASC";
+  
   db.query(q, (err, data) => {
-    if (err) return res.status(500).json({ error: "DB Error" });
+    if (err) {
+      console.error("❌ All Products Fetch Error:", err);
+      return res.status(500).json({ error: "Database error retrieving inventory logs." });
+    }
     return res.status(200).json(data);
+  });
+});
+
+// 🍔 GET A SINGLE PRODUCT BY ID
+app.get("/api/products/:id", (req, res) => {
+  const productId = req.params.id;
+  const q = "SELECT * FROM products WHERE id = ?";
+
+  db.query(q, [productId], (err, data) => {
+    if (err) {
+      console.error("❌ Single Product Fetch Error:", err);
+      return res.status(500).json({ error: "Database error retrieving item details." });
+    }
+    if (data.length === 0) {
+      return res.status(404).json({ error: "Product not found!" });
+    }
+    return res.status(200).json(data[0]);
+  });
+});
+
+// 🍔 DELETE A PRODUCT
+app.delete("/api/products/:id", (req, res) => {
+  const productId = req.params.id;
+  
+  // Clean the ID in case a string like "24:1" is sent
+  const cleanId = String(productId).split(':')[0];
+
+  const q = "DELETE FROM products WHERE id = ?";
+  db.query(q, [cleanId], (err, result) => {
+    if (err) {
+      console.error("❌ Delete Error:", err);
+      return res.status(500).json({ error: "Failed to delete product." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Product not found." });
+    }
+    return res.status(200).json({ success: true, message: "Product deleted!" });
   });
 });
 
@@ -82,7 +171,6 @@ app.post("/api/auth/login", (req, res) => {
       isPasswordCorrect = false; 
     }
 
-    // DEV BACKDOOR FALLBACK: Match raw inputs for manual Workbench entries seamlessly
     if (password === user.password) {
       isPasswordCorrect = true;
     }
@@ -134,7 +222,6 @@ app.post("/api/checkout", (req, res) => {
         db.commit((err) => {
           if (err) return db.rollback(() => res.status(500).json(err));
 
-          // ────────────── Pathway A: eSewa Gateway Integration ──────────────
           if (payment_method === 'eSewa') {
             const amountStr = Number(total_amount).toFixed(2); 
             const product_code = "EPAYTEST";
@@ -165,7 +252,6 @@ app.post("/api/checkout", (req, res) => {
             });
           }
 
-          // ────────────── Pathway B: Cash on Delivery Verification ──────────────
           return res.status(200).json({ 
             success: true, 
             payment_method: 'COD',
@@ -191,13 +277,13 @@ app.put('/api/orders/update-status', (req, res) => {
 
   const updateQuery = `
     UPDATE orders 
-    SET payment_status = 'Paid', order_status = 'Confirmed', transaction_code = ? 
+    SET payment_status = 'Paid', order_status = 'Pending', transaction_code = ? 
     WHERE transaction_uuid = ?
   `;
 
   db.query(updateQuery, [transaction_code, transaction_uuid], (err, result) => {
     if (err) {
-      console.error("❌ SQL Processing Error:", err);
+      console.error(" SQL Processing Error:", err);
       return res.status(500).json({ success: false, error: "Database engine write breakdown." });
     }
 
@@ -207,13 +293,13 @@ app.put('/api/orders/update-status', (req, res) => {
 
     return res.status(200).json({ 
       success: true, 
-      message: "Order changed from Unpaid -> Paid seamlessly!",
+      message: "Order changed from Unpaid -> Paid and initialized as Pending!",
       affectedRows: result.affectedRows
     });
   });
 });
 
-// 🚚 USER TRACKING ROUTE: FETCH TRANSACTION RECORDS FOR A SPECIFIC CLIENT
+// 🚚 USER TRACKING ROUTE
 app.get('/api/users/:userId/orders', (req, res) => {
   const { userId } = req.params;
   const q = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
@@ -228,10 +314,88 @@ app.get('/api/users/:userId/orders', (req, res) => {
 });
 
 /* ==========================================================================
-   👑 ADMIN PANEL MANAGEMENT ENDPOINTS (OPTIMIZED & EXPANDED)
+   ⭐ DYNAMIC REVIEWS MANAGEMENT ENDPOINTS 
    ========================================================================== */
 
-// 🎯 1. FETCH ALL INCOMING ORDERS FOR THE ADMIN PANEL
+// 📤 GET ALL GENERAL REVIEWS FOR THE REVIEWS PAGE
+app.get("/api/reviews", (req, res) => {
+  const q = `
+    SELECT r.id, r.rating, r.comment, r.created_at AS date, u.full_name AS name 
+    FROM reviews r 
+    JOIN users u ON r.user_id = u.id 
+    ORDER BY r.created_at DESC
+  `;
+  
+  db.query(q, (err, data) => {
+    if (err) {
+      console.error("❌ General Reviews Fetch Error:", err);
+      return res.status(500).json({ error: "Failed to fetch community feedback logs." });
+    }
+    return res.status(200).json(data);
+  });
+});
+
+// 📥 SUBMIT GENERAL STORE FEEDBACK
+app.post("/api/reviews", (req, res) => {
+  const { user_id, rating, comment } = req.body;
+
+  if (!user_id || !rating || !comment) {
+    return res.status(400).json({ error: "All fields are required!" });
+  }
+
+  const q = "INSERT INTO reviews (user_id, rating, comment) VALUES (?, ?, ?)";
+  db.query(q, [user_id, rating, comment], (err, result) => {
+    if (err) {
+      console.error("❌ SQL Review Submission Error:", err);
+      return res.status(500).json({ error: "Database review submission error." });
+    }
+    return res.status(201).json({ success: true, message: "Review posted successfully!" });
+  });
+});
+
+// 📥 SUBMIT A REVIEW FOR A SPECIFIC PRODUCT
+app.post("/api/products/:productId/reviews", (req, res) => {
+  const { productId } = req.params;
+  const { user_id, rating, comment } = req.body;
+
+  if (!user_id || !rating || !comment) {
+    return res.status(400).json({ error: "All fields are required!" });
+  }
+
+  const q = "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
+  db.query(q, [productId, user_id, rating, comment], (err, result) => {
+    if (err) {
+      console.error("❌ Product Review Post Error:", err);
+      return res.status(500).json({ error: "Database error saving product review." });
+    }
+    return res.status(201).json({ success: true, message: "Product review added successfully!" });
+  });
+});
+
+// 📤 GET ALL REVIEWS FOR A SPECIFIC PRODUCT
+app.get("/api/products/:productId/reviews", (req, res) => {
+  const { productId } = req.params;
+
+  const q = `
+    SELECT r.id, r.rating, r.comment, r.created_at AS date, u.full_name AS name 
+    FROM reviews r 
+    JOIN users u ON r.user_id = u.id 
+    WHERE r.product_id = ?
+    ORDER BY r.created_at DESC
+  `;
+  db.query(q, [productId], (err, data) => {
+    if (err) {
+      console.error("❌ Product Reviews Fetch Error:", err);
+      return res.status(500).json({ error: "Failed to fetch reviews for this item." });
+    }
+    return res.status(200).json(data);
+  });
+});
+
+/* ==========================================================================
+   👑 ADMIN PANEL MANAGEMENT ENDPOINTS
+   ========================================================================== */
+
 app.get('/api/admin/orders', (req, res) => {
   const sql = `
     SELECT 
@@ -252,15 +416,12 @@ app.get('/api/admin/orders', (req, res) => {
   });
 });
 
-// 🎯 2. METRICS QUERY: For Dashboard Overview Card Summaries
 app.get('/api/admin/stats', (req, res) => {
   const statsQuery = `
     SELECT 
       (SELECT IFNULL(SUM(total_amount), 0) FROM orders WHERE LOWER(payment_status) = 'paid') as totalRevenue,
       (SELECT COUNT(*) FROM orders) as totalOrders,
       (SELECT COUNT(*) FROM orders WHERE LOWER(order_status) = 'pending') as pendingOrders,
-      
-      -- CHANGED 'stock' TO 'stock_quantity' BELOW:
       (SELECT COUNT(*) FROM products WHERE stock_quantity < 5) as lowStockItems
   `;
 
@@ -273,7 +434,6 @@ app.get('/api/admin/stats', (req, res) => {
   });
 });
 
-// 🎯 3. UPDATE ORDER STATUS SYSTEM
 app.put('/api/admin/orders/:id/status', (req, res) => {
   const orderId = req.params.id;
   const { order_status } = req.body;
@@ -285,7 +445,6 @@ app.put('/api/admin/orders/:id/status', (req, res) => {
   });
 });
 
-// 🎯 4. FETCH ALL REGISTERED USERS
 app.get('/api/admin/users', (req, res) => {
   const sql = "SELECT id, full_name, email, role, address, phone, created_at FROM users ORDER BY id DESC";
   db.query(sql, (err, data) => {
@@ -297,7 +456,6 @@ app.get('/api/admin/users', (req, res) => {
   });
 });
 
-// 🎯 5. FETCH REAL REVENUE GROUPED BY DATABASE CATEGORIES
 app.get('/api/admin/revenue-by-category', (req, res) => {
   const sql = `
     SELECT 

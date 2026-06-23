@@ -1,20 +1,31 @@
 import { ShoppingCart, Check } from 'lucide-react'; // Added Check for feedback
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 🚀 Imported for routing
 
 export default function ProductCard({ item }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
+  const navigate = useNavigate(); // 🚀 Initialize navigate hook
 
-  const handleAdd = () => {
+  const handleAdd = (e) => {
+    e.stopPropagation(); // 🚀 CRITICAL: Prevents triggering the card's main page click handler
     addToCart(item);
     setAdded(true);
     // Reset the button icon after 1.5 seconds
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const handleCardClick = () => {
+    // 🚀 Navigates directly to your dynamic product details screen using the item's database ID
+    navigate(`/product/${item.id}`);
+  };
+
   return (
-    <div className="group bg-white/70 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+    <div 
+      onClick={handleCardClick} // 🚀 Click anywhere on the card to open product details
+      className="group bg-white/70 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+    >
       
       {/* Product Image Holder */}
       <div className="h-52 bg-pink-100/50 rounded-[2rem] overflow-hidden mb-6 flex items-center justify-center relative">
@@ -47,7 +58,7 @@ export default function ProductCard({ item }) {
         </div>
         
         <button 
-          onClick={handleAdd}
+          onClick={handleAdd} // 🚀 Only runs add to cart and blocks card click
           className={`${
             added ? 'bg-green-600' : 'bg-[#7A231E]'
           } text-white p-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-red-200 flex items-center justify-center`}
