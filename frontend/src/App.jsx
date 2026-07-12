@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 
-// Layout Components
+
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Featured from './components/Featured';
@@ -22,10 +22,10 @@ import RegisterPage from './pages/RegisterPage';
 import AdminDashboard from './pages/AdminDashboard'; 
 import OrderTracking from './pages/OrderTracking';
 
-// Assets
+
 import wavyBG from './assets/landing-bg.png'; 
 
-// Image Imports
+
 import cake1 from './assets/choco-cake.png';
 import cake2 from './assets/red-velvet.png';
 import cake3 from './assets/blueberry.png'; 
@@ -87,28 +87,25 @@ useEffect(() => {
         let catId = 0;
         const name = item.name.toLowerCase();
         
-        // Categorization logic
-    // 1. Prioritize Cookies: Catch "cookie" or "choco chip" specifically
+        
   if (name.includes('cookie') || name.includes('choco chip') || name.includes('oatmeal') || name.includes('peanut')) {
     catId = 5; 
   } 
-  // 2. Cakes
+
   else if (name.includes('cake') || name.includes('velvet') || name.includes('cheesecake')) {
     catId = 1;
   } 
-  // 3. Donuts
+
   else if (name.includes('donut') || name.includes('boston') || name.includes('sprinkles')) {
     catId = 2;
   } 
-  // 4. Pastries
+
   else if (name.includes('pastry') || name.includes('black forest') || name.includes('pineapple')) {
     catId = 3;
   } 
-  // 5. Ice Cream (Last, for remaining items)
   else if (name.includes('sorbet') || name.includes('scoop') || name.includes('belgian')) {
     catId = 4;
   }
-        // CRITICAL: Attach the image here
         return { 
           ...item, 
           category_id: catId,
@@ -116,7 +113,7 @@ useEffect(() => {
         };
       });
 
-      // ... rest of your sort and setProducts logic
+     
       processedData.sort((a, b) => {
         const catA = getCategoryName(a.category_id);
         const catB = getCategoryName(b.category_id);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // 🎯 Clean import
+import { Link, useNavigate } from "react-router-dom"; 
 import axios from "axios";
 
 export default function RegisterPage() {
@@ -12,13 +12,13 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   
-  const navigate = useNavigate(); // 🎯 FIX: Changed from useNav() to useNavigate()
+  const navigate = useNavigate(); 
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post('http://localhost:8800/api/auth/register', formData); // Double-check your route path
+      const res = await axios.post('http://localhost:8800/api/auth/register', formData); 
       if (res.data.success) {
         alert("Registration complete! Please sign in.");
         navigate('/login');

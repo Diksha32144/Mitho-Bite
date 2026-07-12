@@ -13,19 +13,19 @@ export default function LoginPage() {
     try {
       const res = await axios.post('http://localhost:8800/api/auth/login', formData);
       if (res.data.success) {
-        // Save user profile directly into local storage browser session
+ 
         localStorage.setItem('user', JSON.stringify(res.data.user));
         
-        // Redirect based on backend role properties
+     
         if (res.data.user?.role === 'admin') {
-          navigate('/admin'); // Redirect straight to your stunning admin panel!
+          navigate('/admin'); 
         } else {
           navigate('/');
         }
         window.location.reload(); 
       }
     } catch (err) {
-      // FIX: Check for BOTH .message and .error so it catches whatever your backend sends!
+
       const serverError = err.response?.data?.message || err.response?.data?.error || 'Authentication server down.';
       setError(serverError);
     }

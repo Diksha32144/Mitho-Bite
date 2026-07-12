@@ -3,7 +3,7 @@ import mysql from 'mysql2';
 import cors from 'cors';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import multer from 'multer'; // 1. Import multer
+import multer from 'multer'; 
 import path from 'path';
 
 const app = express();
@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/images', express.static('public/images'));
 
-// 2. Configure Multer Storage
+
 const storage = multer.diskStorage({
   destination: './public/images',
   filename: (req, file, cb) => {
@@ -37,7 +37,7 @@ db.connect((err) => {
 });
 
 
-// 🍔 ADD A NEW PRODUCT
+
 app.post("/api/products", upload.single('image'), (req, res) => {
   const { name, description, price, stock_quantity, category_id } = req.body;
   const image = req.file ? req.file.filename : null;
@@ -49,18 +49,18 @@ app.post("/api/products", upload.single('image'), (req, res) => {
   });
 });
 
-// 🍔 UPDATE AN EXISTING PRODUCT
+
 app.put("/api/products/:id", upload.single('image'), (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock_quantity, category_id } = req.body;
   
   let sql, params;
   if (req.file) {
-    // If a new image is uploaded, update the image field
+  
     sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=?, image=? WHERE id=?";
     params = [name, description, price, stock_quantity, category_id, req.file.filename, id];
   } else {
-    // If no new image, keep the existing one in the database
+   
     sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=? WHERE id=?";
     params = [name, description, price, stock_quantity, category_id, id];
   }
@@ -70,28 +70,28 @@ app.put("/api/products/:id", upload.single('image'), (req, res) => {
     return res.status(200).json({ success: true });
   });
 });
-// 🍔 GET ALL PRODUCTS GROUPED BY CATEGORY
+
 app.get("/api/products", (req, res) => {
-  // Use explicit column selection to avoid ID conflicts from joins
+  
   const q = "SELECT id, name, description, price, stock_quantity, category_id, image FROM products ORDER BY category_id ASC, name ASC";
   
   db.query(q, (err, data) => {
     if (err) {
-      console.error("❌ All Products Fetch Error:", err);
+      console.error(" All Products Fetch Error:", err);
       return res.status(500).json({ error: "Database error retrieving inventory logs." });
     }
     return res.status(200).json(data);
   });
 });
 
-// 🍔 GET A SINGLE PRODUCT BY ID
+
 app.get("/api/products/:id", (req, res) => {
   const productId = req.params.id;
   const q = "SELECT * FROM products WHERE id = ?";
 
   db.query(q, [productId], (err, data) => {
     if (err) {
-      console.error("❌ Single Product Fetch Error:", err);
+      console.error(" Single Product Fetch Error:", err);
       return res.status(500).json({ error: "Database error retrieving item details." });
     }
     if (data.length === 0) {
@@ -101,17 +101,16 @@ app.get("/api/products/:id", (req, res) => {
   });
 });
 
-// 🍔 DELETE A PRODUCT
+
 app.delete("/api/products/:id", (req, res) => {
   const productId = req.params.id;
   
-  // Clean the ID in case a string like "24:1" is sent
   const cleanId = String(productId).split(':')[0];
 
   const q = "DELETE FROM products WHERE id = ?";
   db.query(q, [cleanId], (err, result) => {
     if (err) {
-      console.error("❌ Delete Error:", err);
+      console.error(" Delete Error:", err);
       return res.status(500).json({ error: "Failed to delete product." });
     }
     if (result.affectedRows === 0) {
@@ -121,7 +120,6 @@ app.delete("/api/products/:id", (req, res) => {
   });
 });
 
-// 📝 USER REGISTER ENDPOINT
 app.post("/api/auth/register", async (req, res) => {
   const { full_name, email, password, address, phone } = req.body;
 
@@ -149,7 +147,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// 🔑 USER LOGIN ENDPOINT (WITH DEVELOPMENT TESTING BACKDOORS)
+
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -194,7 +192,7 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
-// 💳 INITIAL ORDER GENERATOR & ESEWA SIGNER
+
 app.post("/api/checkout", (req, res) => {
   const { user_id, total_amount, payment_method, delivery_address, items } = req.body;
 
@@ -264,7 +262,7 @@ app.post("/api/checkout", (req, res) => {
   });
 });
 
-// 🎯 UPDATE STATUS AFTER ESEWA VERIFICATION
+
 app.put('/api/orders/update-status', (req, res) => {
   const { transaction_uuid, transaction_code } = req.body;
 
@@ -299,25 +297,23 @@ app.put('/api/orders/update-status', (req, res) => {
   });
 });
 
-// 🚚 USER TRACKING ROUTE
+
 app.get('/api/users/:userId/orders', (req, res) => {
   const { userId } = req.params;
   const q = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
 
   db.query(q, [userId], (err, data) => {
     if (err) {
-      console.error("❌ Tracking Fetch Error:", err);
+      console.error(" Tracking Fetch Error:", err);
       return res.status(500).json({ error: "Failed to fetch customer tracking logs." });
     }
     return res.status(200).json(data);
   });
 });
 
-/* ==========================================================================
-   ⭐ DYNAMIC REVIEWS MANAGEMENT ENDPOINTS 
-   ========================================================================== */
 
-// 📤 GET ALL GENERAL REVIEWS FOR THE REVIEWS PAGE
+
+
 app.get("/api/reviews", (req, res) => {
   const q = `
     SELECT r.id, r.rating, r.comment, r.created_at AS date, u.full_name AS name 
@@ -328,14 +324,14 @@ app.get("/api/reviews", (req, res) => {
   
   db.query(q, (err, data) => {
     if (err) {
-      console.error("❌ General Reviews Fetch Error:", err);
+      console.error(" General Reviews Fetch Error:", err);
       return res.status(500).json({ error: "Failed to fetch community feedback logs." });
     }
     return res.status(200).json(data);
   });
 });
 
-// 📥 SUBMIT GENERAL STORE FEEDBACK
+
 app.post("/api/reviews", (req, res) => {
   const { user_id, rating, comment } = req.body;
 
@@ -353,7 +349,7 @@ app.post("/api/reviews", (req, res) => {
   });
 });
 
-// 📥 SUBMIT A REVIEW FOR A SPECIFIC PRODUCT
+
 app.post("/api/products/:productId/reviews", (req, res) => {
   const { productId } = req.params;
   const { user_id, rating, comment } = req.body;
@@ -365,14 +361,14 @@ app.post("/api/products/:productId/reviews", (req, res) => {
   const q = "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
   db.query(q, [productId, user_id, rating, comment], (err, result) => {
     if (err) {
-      console.error("❌ Product Review Post Error:", err);
+      console.error(" Product Review Post Error:", err);
       return res.status(500).json({ error: "Database error saving product review." });
     }
     return res.status(201).json({ success: true, message: "Product review added successfully!" });
   });
 });
 
-// 📤 GET ALL REVIEWS FOR A SPECIFIC PRODUCT
+
 app.get("/api/products/:productId/reviews", (req, res) => {
   const { productId } = req.params;
 
@@ -385,33 +381,32 @@ app.get("/api/products/:productId/reviews", (req, res) => {
   `;
   db.query(q, [productId], (err, data) => {
     if (err) {
-      console.error("❌ Product Reviews Fetch Error:", err);
+      console.error(" Product Reviews Fetch Error:", err);
       return res.status(500).json({ error: "Failed to fetch reviews for this item." });
     }
     return res.status(200).json(data);
   });
 });
 
-/* ==========================================================================
-   👑 ADMIN PANEL MANAGEMENT ENDPOINTS
-   ========================================================================== */
 
 app.get('/api/admin/orders', (req, res) => {
   const sql = `
     SELECT 
       o.*, 
       IFNULL(u.full_name, 'Guest Customer') AS full_name, 
-      IFNULL(u.phone, 'N/A') AS phone 
+      IFNULL(u.phone, 'N/A') AS phone,
+      GROUP_CONCAT(CONCAT(p.name, '|', oi.quantity, '|', IFNULL(p.image, '')) SEPARATOR '||') AS items_list
     FROM orders o 
     LEFT JOIN users u ON o.user_id = u.id 
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.id
+    GROUP BY o.id
     ORDER BY o.id DESC
   `;
   
   db.query(sql, (err, data) => {
-    if (err) {
-      console.error("❌ Admin Orders SQL Error:", err);
-      return res.status(500).json({ success: false, error: err.message });
-    }
+    if (err) return res.status(500).json({ success: false, error: err.message });
+   
     return res.status(200).json(data);
   });
 });
@@ -478,5 +473,29 @@ app.get('/api/admin/revenue-by-category', (req, res) => {
   });
 });
 
+
+app.get('/api/orders/:order_id/items', (req, res) => {
+  const sql = `
+    SELECT oi.*, p.name, p.image 
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.id
+    WHERE oi.order_id = ?
+  `;
+  db.query(sql, [req.params.order_id], (err, data) => {
+    if (err) return res.status(500).json({ error: err.message });
+    return res.status(200).json(data);
+  });
+});
+
+
+app.put('/api/orders/:order_id/cancel', (req, res) => {
+  const sql = "UPDATE orders SET order_status = 'Cancelled' WHERE id = ?";
+  db.query(sql, [req.params.order_id], (err, result) => {
+    if (err) return res.status(500).json(err);
+    return res.json({ message: "Order cancelled successfully" });
+  });
+});
+
+
 const PORT = 8800;
-app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(` Server on http://localhost:${PORT}`));

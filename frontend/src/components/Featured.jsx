@@ -1,5 +1,5 @@
 import React from 'react';
-import donutHero from "../assets/glazed donut.png"; // Remove the space before .png
+import donutHero from "../assets/glazed donut.png"; 
 
 export default function Featured() {
   return (
@@ -27,7 +27,7 @@ export default function Featured() {
           </button>
         </div>
 
-        {/* Right Side: Image with Decorative Box */}
+       
         <div className="relative">
           <div className="absolute -inset-4 bg-pink-100/50 rounded-[3rem] rotate-3"></div>
           <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl">

@@ -15,18 +15,17 @@ const CheckoutPage = () => {
     street: '', city: '', zip: '', paymentMethod: 'COD' 
   });
 
-  // 🎯 LOAD AUTH USER DATA ON INITIALIZATION
   useEffect(() => {
     const savedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
     if (savedUser) {
       setCurrentUser(savedUser);
       
-      // Split full name safely into fields if it contains a space
+     
       const nameParts = savedUser.full_name ? savedUser.full_name.split(' ') : ['', ''];
       const first = nameParts[0] || '';
       const last = nameParts.slice(1).join(' ') || '';
 
-      // Autofill inputs seamlessly using account variables from your users table
+     
       setFormData((prev) => ({
         ...prev,
         firstName: first,
@@ -50,7 +49,7 @@ const CheckoutPage = () => {
 
     setLoading(true);
 
-    // 🎯 DYNAMIC UPDATE: Attaching authenticated user_id directly from login context payload
+
     const orderData = {
       user_id: currentUser.id, 
       total_amount: Number(cartTotal), 
@@ -112,7 +111,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // 🔒 SECURITY CHECK: If visitor is guest, display elegant prompt screen to log in
+ 
   if (!localStorage.getItem('user')) {
     return (
       <div className="bg-[#FAF9F6] min-h-screen pt-36 flex items-center justify-center px-4">
@@ -140,9 +139,9 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Left Column: Forms */}
+        
           <div className="lg:col-span-2 space-y-6">
-            {/* Contact Section */}
+          
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-50">
               <div className="flex items-center gap-3 mb-6 text-[#E94E77]">
                 <User size={22} strokeWidth={2.5} />
@@ -156,7 +155,7 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Address Section */}
+        
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-50">
               <div className="flex items-center gap-3 mb-6 text-[#E94E77]">
                 <MapPin size={22} strokeWidth={2.5} />
@@ -171,7 +170,7 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Payment Section */}
+            
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-50">
               <div className="flex items-center gap-3 mb-6 text-[#E94E77]">
                 <CreditCard size={22} strokeWidth={2.5} />
@@ -194,12 +193,12 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Right Column: Order Summary */}
+        
           <div className="lg:col-span-1">
             <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-50 sticky top-28">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Order Summary</h2>
               
-              {/* Product List */}
+              
               <div className="space-y-6 mb-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-4">
@@ -215,7 +214,7 @@ const CheckoutPage = () => {
                 ))}
               </div>
 
-              {/* Price Breakdown */}
+             
               <div className="border-t border-gray-100 pt-6 space-y-3">
                 <div className="flex justify-between text-gray-400 text-sm font-bold">
                   <span>Subtotal</span>
@@ -234,7 +233,6 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Main Submit Button */}
               <button 
                 onClick={handlePlaceOrder} 
                 disabled={loading} 
@@ -243,7 +241,7 @@ const CheckoutPage = () => {
                 {loading ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={20} className="bg-white/20 rounded p-0.5" /> Place Order</>}
               </button>
 
-              {/* 🛠️ DEVELOPER PRESENTATION BYPASS BUTTON */}
+             
               {formData.paymentMethod === 'eSewa' && (
                 <button
                   type="button"
@@ -265,7 +263,7 @@ const CheckoutPage = () => {
                   }}
                   className="mt-3 w-full border-2 border-dashed border-amber-400 bg-amber-50/60 hover:bg-amber-50 text-amber-800 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 >
-                  ⚠️ Sandbox Offline? Force Success Route
+                  
                 </button>
               )}
 

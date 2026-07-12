@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, ShoppingCart, Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import ProductReviews from '../components/ProductReviews'; // 🚀 Imported
+import ProductReviews from '../components/ProductReviews';
 
 export default function ProductDetailPage({ imageLib }) {
   const { id } = useParams(); 
@@ -39,7 +39,7 @@ export default function ProductDetailPage({ imageLib }) {
     <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-12">
         
-        {/* Left: Interactive Image Area */}
+      
         <div className="space-y-4">
           <button 
             onClick={() => navigate(-1)} 
@@ -56,7 +56,7 @@ export default function ProductDetailPage({ imageLib }) {
           </div>
         </div>
 
-        {/* Right: Pricing, Quantities & Details */}
+     
         <div className="flex flex-col justify-center space-y-6">
           <div>
             <span className="text-xs font-black uppercase tracking-widest text-[#E94E77]">{product.category || 'Bakery Treats'}</span>
@@ -74,11 +74,11 @@ export default function ProductDetailPage({ imageLib }) {
           <div className="border-y border-gray-100 py-4 flex justify-between items-center">
             <div>
               <span className="text-xs text-gray-400 font-bold block uppercase">Total Cost</span>
-              {/* Multiplying price by selected quantity for dynamic checkout preview */}
+            
               <span className="text-3xl font-black text-[#432818]">Rs. {product.price * quantity}</span>
             </div>
 
-            {/* Quantity Controls */}
+        
             <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
               <button 
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -96,11 +96,10 @@ export default function ProductDetailPage({ imageLib }) {
             </div>
           </div>
 
-          {/* Checkout Funnel Redirection */}
+          
           <button 
             onClick={() => {
-              // Note: If your context's addToCart takes a second arg for quantity, 
-              // use: addToCart(product, quantity); otherwise this item object structure works perfectly!
+             
               addToCart({ ...product, quantity });
               navigate('/cart');
             }}
@@ -112,7 +111,7 @@ export default function ProductDetailPage({ imageLib }) {
         </div>
       </div>
       
-      {/* 🚀 STEP 2: DYNAMIC PRODUCT-SPECIFIC REVIEWS COMPONENT */}
+    
       <ProductReviews productId={id} />
 
     </div>

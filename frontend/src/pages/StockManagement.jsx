@@ -5,12 +5,12 @@ export default function StockManagement() {
   const [stats, setStats] = useState({ totalOrders: 0, pendingOrders: 0, lowStockItems: 0 });
 
   const loadStockData = () => {
-    // Get all items to view counts
+  
     fetch('http://localhost:8800/api/products')
       .then(res => res.json())
       .then(data => setProducts(data));
 
-    // Get counter statistics cards summary
+   
     fetch('http://localhost:8800/api/admin/stats')
       .then(res => res.json())
       .then(data => setStats(data));
@@ -20,7 +20,7 @@ export default function StockManagement() {
     loadStockData();
   }, []);
 
-  // ⚡ QUICK ADJUST INVENTORY VALUE COUNTS
+ 
   const adjustStock = (product, offset) => {
     const newQuantity = Math.max(0, (product.stock_quantity || 0) + offset);
     
@@ -63,7 +63,7 @@ export default function StockManagement() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b">
+            <tr className="bg-pink-600 text-white text-xs uppercase font-semibold border-b">
               <th className="p-4">Product</th>
               <th className="p-4 text-center">Count Status</th>
               <th className="p-4 text-center">Quick Adjust</th>

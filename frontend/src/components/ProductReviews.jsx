@@ -40,7 +40,7 @@ export default function ProductReviews({ productId }) {
       });
       setComment('');
       setRating(5);
-      fetchProductReviews(); // Dynamically update review feed
+      fetchProductReviews(); 
     } catch (err) {
       alert("Failed to submit your product review.");
     } finally {
@@ -53,7 +53,7 @@ export default function ProductReviews({ productId }) {
       <h2 className="text-2xl font-black text-[#432818] mb-8">Taste Testimony ({reviews.length})</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Left Sidebar Form Option */}
+       
         <div className="lg:col-span-1">
           <h3 className="font-bold text-gray-800 text-sm mb-2">Leave an Honest Review</h3>
           <p className="text-xs text-gray-400 mb-4">How did you enjoy this bakery item?</p>

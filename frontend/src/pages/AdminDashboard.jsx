@@ -16,7 +16,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-// 📂 Externalized Sub-Workspace Components
+
 import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
 import StockManagement from './StockManagement';
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     lowStockItems: 0
   });
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]); // 🌟 Live Product Pipeline Route
+  const [products, setProducts] = useState([]); 
   const [categoryRevenue, setCategoryRevenue] = useState([]); 
   const [adminInfo, setAdminInfo] = useState({ full_name: 'Admin User', email: 'admin@gmail.com' });
 
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     }
     setAdminInfo(userObj);
 
-    // Synchronize all live database metrics endpoints concurrently
+   
     const fetchDashboardData = async () => {
       try {
         const [statsRes, ordersRes, revenueRes, productsRes] = await Promise.all([
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
         setStats(statsRes.data);
         setOrders(ordersRes.data);
         setCategoryRevenue(revenueRes.data);
-        setProducts(productsRes.data || []); // Populates your product matrices
+        setProducts(productsRes.data || []); 
       } catch (err) {
         console.error("Dashboard fetching breakdown:", err);
       } finally {
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex bg-[#F8F9FA] min-h-screen font-sans text-[#333333] selection:bg-rose-100">
       
-      {/* 1. FIXED LEFT SIDEBAR PANELS */}
+     
       <aside className="w-64 bg-[#3d1210] flex flex-col justify-between text-white fixed h-screen z-20 shadow-xl">
         <div>
           <div className="p-6 border-b border-white/10 flex items-center gap-3">
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* 2. RIGHT SCROLLABLE DATA DASHBOARD CONTAINER */}
+     
       <main className="flex-1 pl-64 min-h-screen">
         <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
@@ -200,10 +200,10 @@ export default function AdminDashboard() {
 
         <div className="p-8 space-y-8 max-w-7xl mx-auto">
           
-          {/* 📊 CONDITION A: RENDER CORE ANALYTICS OVERVIEW */}
+         
           {activeTab === 'Overview' && (
             <>
-              {/* GRID ROW A: METRICS CARDS */}
+           
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-start justify-between">
                   <div className="space-y-3">
@@ -258,10 +258,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* GRID ROW B: SPLIT LAYOUT COLUMNS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* LEFT SIDE: RECENT ORDERS LOG FEED */}
+                
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 lg:col-span-2 space-y-4">
                   <div className="flex items-center justify-between pb-2">
                     <h3 className="text-base font-black text-gray-900 tracking-tight">Recent Orders</h3>
@@ -297,7 +296,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* RIGHT SIDE: DYNAMIC REVENUE BY CATEGORY AREA */}
+             
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6">
                   <div>
                     <h3 className="text-base font-black text-gray-900 tracking-tight">Revenue by Category</h3>
@@ -336,17 +335,17 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* 📦 CONDITION B: RENDER PRODUCTS PANEL WORKSPACE */}
+          
           {activeTab === 'Products' && (
             <ProductManagement products={products} setProducts={setProducts} />
           )}
 
-          {/* 📋 CONDITION C: RENDER HISTORIC ORDERS WORKSPACE */}
+        
           {activeTab === 'Orders' && (
             <OrderManagement orders={orders} setOrders={setOrders} />
           )}
 
-          {/* ⚠️ CONDITION D: RENDER STOCK ALERT CONTROL WORKSPACE */}
+         
           {activeTab === 'Stock' && (
             <StockManagement products={products} stats={stats} />
           )}

@@ -1,15 +1,15 @@
-import { ShoppingCart, Check } from 'lucide-react'; // Added Check for feedback
+import { ShoppingCart, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 🚀 Imported for routing
+import { useNavigate } from 'react-router-dom'; 
 
 export default function ProductCard({ item }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
-  const navigate = useNavigate(); // 🚀 Initialize navigate hook
+  const navigate = useNavigate();
 
   const handleAdd = (e) => {
-    e.stopPropagation(); // 🚀 CRITICAL: Prevents triggering the card's main page click handler
+    e.stopPropagation(); 
     addToCart(item);
     setAdded(true);
     // Reset the button icon after 1.5 seconds
@@ -17,17 +17,17 @@ export default function ProductCard({ item }) {
   };
 
   const handleCardClick = () => {
-    // 🚀 Navigates directly to your dynamic product details screen using the item's database ID
+  
     navigate(`/product/${item.id}`);
   };
 
   return (
     <div 
-      onClick={handleCardClick} // 🚀 Click anywhere on the card to open product details
+      onClick={handleCardClick} 
       className="group bg-white/70 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
     >
       
-      {/* Product Image Holder */}
+     
       <div className="h-52 bg-pink-100/50 rounded-[2rem] overflow-hidden mb-6 flex items-center justify-center relative">
         {item.image ? (
           <img 
@@ -42,7 +42,7 @@ export default function ProductCard({ item }) {
         )}
       </div>
 
-      {/* Info */}
+     
       <div className="space-y-2">
         <h3 className="text-2xl font-bold text-gray-800">{item.name}</h3>
         <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
@@ -50,7 +50,7 @@ export default function ProductCard({ item }) {
         </p>
       </div>
 
-      {/* Pricing & Add Button */}
+   
       <div className="mt-8 flex justify-between items-center">
         <div>
           <span className="text-xs text-gray-400 block uppercase font-bold tracking-tighter">Price</span>
@@ -58,7 +58,7 @@ export default function ProductCard({ item }) {
         </div>
         
         <button 
-          onClick={handleAdd} // 🚀 Only runs add to cart and blocks card click
+          onClick={handleAdd} 
           className={`${
             added ? 'bg-green-600' : 'bg-[#7A231E]'
           } text-white p-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-red-200 flex items-center justify-center`}

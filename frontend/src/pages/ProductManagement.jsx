@@ -19,7 +19,7 @@ const fetchProducts = async () => {
     const res = await fetch('http://localhost:8800/api/products');
     const data = await res.json();
     
-    // Log the data to see what we received from the API
+   
     console.log("DEBUG - API Data:", data);
 
     if (Array.isArray(data)) {
@@ -34,12 +34,11 @@ const fetchProducts = async () => {
   }
 };
 
-// Add this log at the bottom of your component, right before return
 console.log("DEBUG - Current State (products):", products);
 
 console.log("Component rendered. Current products state:", products);
 
-  // 2. Single useEffect calling the unified function
+
   
  useEffect(() => {
   fetchProducts();
@@ -61,7 +60,7 @@ console.log("Component rendered. Current products state:", products);
   const cleanId = (id) => id;
 
  const handleDelete = async (id) => {
-    // FIX 2: Ensure ID is passed correctly
+ 
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
         const res = await fetch(`http://localhost:8800/api/products/${id}`, { method: 'DELETE' });
@@ -121,7 +120,7 @@ const filteredProducts = products.filter(p => {
     const nameMatch = searchTerm === '' || 
       (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    // Ensure category comparison handles potential nulls
+   
     const pCat = p.category_id ? String(p.category_id) : '';
     const categoryMatch = selectedCategory === 'All' || pCat === String(selectedCategory);
     
@@ -140,7 +139,7 @@ const filteredProducts = products.filter(p => {
       </div>
 
       <div className="flex gap-4 mb-6">
-        <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 p-3 rounded-xl border border-gray-200 text-sm" />
+        <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 p-3 rounded-xl border border-gray-300 text-sm" />
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="p-3 rounded-xl border border-gray-200 text-sm bg-white">
           <option value="All">All Categories ({categoryCounts['All']})</option>
           <option value="1">Cakes ({categoryCounts['1']})</option>
@@ -153,8 +152,8 @@ const filteredProducts = products.filter(p => {
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-gray-50/30">
-            <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+          <thead className="bg-pink-600">
+            <tr className="text-[10px] font-black uppercase tracking-widest text-white">
               <th className="py-4 px-6">Image</th>
               <th className="py-4 px-6">Product Details</th>
               <th className="py-4 px-6">Category</th>

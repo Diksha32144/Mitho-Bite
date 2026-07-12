@@ -1,49 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom'; // 🎯 Added useNavigate
+import { useSearchParams, useNavigate } from 'react-router-dom'; 
 import { useCart } from '../context/CartContext'; 
 import { CheckCircle, ShoppingBag, ArrowLeft, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate(); // 🎯 Initialize navigation hook
+  const navigate = useNavigate(); 
   const { clearCart } = useCart(); 
   const [orderDetails, setOrderDetails] = useState(null);
   const [isMock, setIsMock] = useState(false);
   const [dbSyncStatus, setDbSyncStatus] = useState('updating');
 
  useEffect(() => {
-    // 1. Grab data parameter from eSewa redirect URL
+   
     const dataToken = searchParams.get('data');
 
     if (dataToken) {
       try {
-        // Decode the base64 string provided by eSewa's API response
+        
         const decodedData = JSON.parse(atob(dataToken));
         setOrderDetails(decodedData);
         
-        // Safe check for mock transaction codes
+  
         if (decodedData.transaction_code && String(decodedData.transaction_code).includes('MOCK')) {
           setIsMock(true);
         } else {
           setIsMock(false);
         }
 
-        // 🎯 SYNCHRONIZE WITH MYSQL BACKEND
+        
         axios.put('http://localhost:8800/api/orders/update-status', {
           transaction_uuid: decodedData.transaction_uuid,
           transaction_code: decodedData.transaction_code
         })
         .then(res => {
           console.log("Database updated successfully:", res.data);
-          setDbSyncStatus('success'); // ✅ Turns green when server responds 200 OK
+          setDbSyncStatus('success'); 
         })
         .catch(err => {
           console.error("Database status sync failed:", err);
-          setDbSyncStatus('failed'); // ❌ Triggers red block status if request drops
+          setDbSyncStatus('failed'); 
         });
 
-        // Clear cart items context since checkout is successful
+       
         clearCart();
 
       } catch (err) {
@@ -51,7 +51,7 @@ const SuccessPage = () => {
         setDbSyncStatus('failed');
       }
     } else {
-      // 2. Fallback configuration if bypassed natively / offline testing
+  
       setOrderDetails({
         status: "COMPLETE",
         transaction_code: "TXN-" + Math.floor(100000 + Math.random() * 900000),
@@ -62,7 +62,7 @@ const SuccessPage = () => {
       setDbSyncStatus('success');
       clearCart();
     }
-  }, [searchParams]); // 🎯 Removed clearCart from dependency matrix to prevent state re-runs
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-20 px-6 flex items-center justify-center font-sans">
@@ -129,11 +129,10 @@ const SuccessPage = () => {
           </div>
         )}
 
-        {/* 🎛️ FIXED ACTION CONTROLS */}
         <div className="space-y-3 relative z-50"> 
           <button 
             type="button"
-            onClick={() => navigate('/')} // 🎯 Uses smooth client side state transition
+            onClick={() => navigate('/')} 
             className="w-full bg-[#E94E77] hover:bg-[#d43d65] active:scale-[0.98] text-white font-bold py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <ShoppingBag size={16} /> Keep Browsing Menu
@@ -141,7 +140,7 @@ const SuccessPage = () => {
           
           <button 
             type="button"
-            onClick={() => navigate('/cart')} // 🎯 Uses smooth client side state transition
+            onClick={() => navigate('/cart')}
             className="w-full bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-500 hover:text-gray-700 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1 text-xs cursor-pointer border border-gray-100"
           >
             <ArrowLeft size={12} /> View My Cart Again

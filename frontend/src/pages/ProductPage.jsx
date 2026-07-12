@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { Search, Star, ShoppingCart, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // 🚀 Added for detail page routing
+import { useNavigate } from 'react-router-dom'; 
 
 export default function ProductPage({ products }) {
   const { addToCart } = useCart();
-  const navigate = useNavigate(); // 🚀 Initialize navigation hook
+  const navigate = useNavigate(); 
   const [searchTerm, setSearchTerm] = useState('');
   
-  // FIX 1: Change default state to 'All' to match your App.jsx
+
   const [selectedCategory, setSelectedCategory] = useState('All'); 
   const [addedItems, setAddedItems] = useState({});
 
@@ -21,15 +21,15 @@ export default function ProductPage({ products }) {
     { name: 'Cookies', count: products.filter(p => p.category_id === 5).length },
   ];
 
-  // 2. Updated Filter Logic to match the Homepage
+
   const filtered = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Normalize strings for comparison
+
     const productCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
     const selectedCat = selectedCategory.toLowerCase().replace(/[^a-z]/g, '');
     
-// Inside your filtered logic in ProductPage.jsx
+
 const matchesCat = selectedCategory === 'All' || 
   (selectedCategory === 'Cakes' && p.category_id === 1) ||
   (selectedCategory === 'Donuts' && p.category_id === 2) ||
@@ -41,7 +41,7 @@ const matchesCat = selectedCategory === 'All' ||
   });
 
   const handleAddToCart = (e, item) => {
-    e.stopPropagation(); // 🚀 Prevents full card click handler from opening detail page instantly
+    e.stopPropagation();
     addToCart(item);
     setAddedItems((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
@@ -105,7 +105,7 @@ const matchesCat = selectedCategory === 'All' ||
                 {filtered.map((item) => (
                   <div 
                     key={item.id} 
-                    onClick={() => navigate(`/product/${item.id}`)} // 🚀 Route to specific item details view on click
+                    onClick={() => navigate(`/product/${item.id}`)} 
                     className="group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative cursor-pointer"
                   >
                     <div className="h-64 overflow-hidden bg-gray-100">
@@ -125,7 +125,7 @@ const matchesCat = selectedCategory === 'All' ||
                       <div className="flex justify-between items-center">
                         <span className="text-xl font-black text-gray-900">Rs. {item.price}</span>
                         <button 
-                          onClick={(e) => handleAddToCart(e, item)} // 🚀 Passes event through to isolate the click event
+                          onClick={(e) => handleAddToCart(e, item)} 
                           className={`p-3 rounded-2xl transition-all duration-300 shadow-lg ${
                             addedItems[item.id] ? 'bg-[#00D084] text-white scale-110' : 'bg-[#432818] text-white hover:bg-black'
                           }`}

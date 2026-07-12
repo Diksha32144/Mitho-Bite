@@ -11,7 +11,7 @@ export default function ReviewsPage() {
   const [formData, setFormData] = useState({ rating: 5, comment: '' });
   const currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
 
-  // 🔄 FETCH ALL REVIEWS FROM BACKEND
+  
   const fetchReviews = async () => {
     try {
       const res = await axios.get('http://localhost:8800/api/reviews');
@@ -27,7 +27,7 @@ export default function ReviewsPage() {
     fetchReviews();
   }, []);
 
-  // 📝 HANDLE REVIEW SUBMISSION
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) return alert("Please sign in to drop your feedback!");
@@ -43,7 +43,7 @@ export default function ReviewsPage() {
 
       setFormData({ rating: 5, comment: '' });
       setShowForm(false);
-      fetchReviews(); // Refresh list dynamically!
+      fetchReviews(); 
     } catch (err) {
       alert("Failed to submit review.");
     } finally {
@@ -51,7 +51,7 @@ export default function ReviewsPage() {
     }
   };
 
-  // Helper function to format SQL dates elegantly
+  
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
@@ -60,7 +60,7 @@ export default function ReviewsPage() {
     <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 relative overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
-        {/* Header Section */}
+  
         <div className="text-center mb-16">
           <h1 className="text-4xl font-black text-[#432818] italic">What Our Customers Say</h1>
           <div className="h-1.5 w-20 bg-[#E94E77] mx-auto mt-4 rounded-full"></div>
@@ -69,7 +69,7 @@ export default function ReviewsPage() {
           </p>
         </div>
 
-        {/* Stats Overview */}
+     
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
             <h4 className="text-4xl font-black text-[#E94E77]">4.9</h4>
@@ -88,7 +88,7 @@ export default function ReviewsPage() {
           </div>
         </div>
 
-        {/* --- DYNAMIC FORM MODAL --- */}
+     
         {showForm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
             <div className="bg-white w-full max-w-lg rounded-[3rem] p-10 relative animate-in fade-in zoom-in duration-300 shadow-2xl">
@@ -134,7 +134,7 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {/* Review Grid Output */}
+      
         {fetching ? (
           <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#E94E77] w-10 h-10" /></div>
         ) : reviewsData.length === 0 ? (
@@ -172,7 +172,6 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {/* Call to Action Container */}
         <div className="mt-20 relative z-20">
           <div className="bg-[#7A231E] rounded-[3rem] p-12 text-center text-white shadow-2xl overflow-hidden relative">
             {/* Added relative z-10 below to pull actionable container content safely above ambient glow layer */}
@@ -190,7 +189,7 @@ export default function ReviewsPage() {
                 Write a Review
               </button>
             </div>
-            {/* Ambient background decoration circle layer */}
+           
             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/5 rounded-full blur-3xl z-0"></div>
           </div>
         </div>

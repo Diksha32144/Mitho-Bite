@@ -11,17 +11,17 @@ export default function Navbar() {
 
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // 🎯 AUTH CHECK: Grab the session object dynamically if it exists in the browser
+  
   const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
 
-  // 🎯 LOGOUT HANDLER: Destroys user local storage session and forces a clean state reload
+ 
   const handleLogout = () => {
     localStorage.removeItem('user');
     handleCleanNavigate('/login');
     window.location.reload();
   };
 
-  // 🎯 SMART MENU SCROLLER: Safely bounces back home and scrolls to #menu anchor from ANY page path
+
   const handleMenuNavigation = (e) => {
     e.preventDefault();
     if (location.pathname !== '/') {
@@ -34,7 +34,7 @@ export default function Navbar() {
     }
   };
 
-  // 🎯 CLEAN PATH ROUTER: Forces browser to drop lingering eSewa data parameter suffixes completely
+ 
   const handleCleanNavigate = (path) => {
     navigate(path, { replace: true });
   };
@@ -42,13 +42,13 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full bg-[#7A231E] text-white z-50 shadow-md py-4 px-8 flex items-center justify-between">
       
-      {/* LEFT: LOGO & BRAND */}
+     
       <Link to="/" className="flex items-center gap-3">
         <img src={logo} alt="Logo" className="w-10 h-10 rounded-full" />
         <span className="text-2xl font-black tracking-tight">Mitho_Bite</span>
       </Link>
 
-      {/* CENTER: NAV LINKS */}
+     
       <div className="hidden md:flex items-center gap-10 text-sm font-bold uppercase tracking-widest">
         <a 
           href="#menu" 
@@ -70,7 +70,6 @@ export default function Navbar() {
           Reviews
         </button>
 
-        {/* 🚚 DYNAMIC ORDER TRACKING NAVIGATION TAB */}
         {storedUser && (
           <button 
             onClick={() => handleCleanNavigate('/track-orders')} 
@@ -82,7 +81,7 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* RIGHT: ICONS & DYNAMIC AUTH BUTTONS */}
+      
       <div className="flex items-center gap-6">
         <User size={22} className="cursor-pointer hover:text-pink-300 transition-colors" />
         
@@ -98,11 +97,11 @@ export default function Navbar() {
           )}
         </button>
 
-        {/* 🎯 DYNAMIC RENDERING BLOCK BASED ON LOGIN STATUS */}
+     
         {storedUser ? (
           <div className="flex items-center gap-4">
             
-            {/* 👑 ROLE PROTECTION: Only visible if the logged-in account has an 'admin' role */}
+           
             {storedUser.role === 'admin' && (
               <button 
                 onClick={() => handleCleanNavigate('/admin')}

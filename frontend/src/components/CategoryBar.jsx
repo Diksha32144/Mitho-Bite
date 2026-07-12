@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function CategoryBar({ activeCategory, setActiveCategory, products }) {
-  // Use state to hold the counts so they can be updated dynamically
+
   const [counts, setCounts] = useState({});
   const categories = ['All', 'Cakes', 'Pastries', 'Donuts', 'Ice Cream', 'Cookies'];
 
@@ -10,7 +10,7 @@ export default function CategoryBar({ activeCategory, setActiveCategory, product
     return cats[id] || 'Unassigned';
   };
 
-  // This useEffect ensures counts recalculate when 'products' data arrives
+  
   useEffect(() => {
     const newCounts = { All: products.length };
     
@@ -23,7 +23,7 @@ export default function CategoryBar({ activeCategory, setActiveCategory, product
     });
     
     setCounts(newCounts);
-  }, [products]); // Re-runs whenever the 'products' prop is updated
+  }, [products]); 
 
   return (
     <div className="flex justify-center gap-4 mb-12">
