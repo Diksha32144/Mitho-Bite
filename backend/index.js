@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
@@ -12,7 +14,6 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/images', express.static('public/images'));
 
-
 const storage = multer.diskStorage({
   destination: './public/images',
   filename: (req, file, cb) => {
@@ -21,11 +22,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// 🔻 Updated DB connection using environment variables from .env
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root", 
-  password: "12345", 
-  database: "mitho_bite"
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root", 
+  password: process.env.DB_PASSWORD || "12345", 
+  database: process.env.DB_NAME || "mitho_bite"
 });
 
 db.connect((err) => {
@@ -35,8 +37,6 @@ db.connect((err) => {
   }
   console.log("✅ Connected to MySQL Database");
 });
-
-
 
 app.post("/api/products", upload.single('image'), (req, res) => {
   const { name, description, price, stock_quantity, category_id } = req.body;
@@ -49,18 +49,15 @@ app.post("/api/products", upload.single('image'), (req, res) => {
   });
 });
 
-
 app.put("/api/products/:id", upload.single('image'), (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock_quantity, category_id } = req.body;
   
   let sql, params;
   if (req.file) {
-  
     sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=?, image=? WHERE id=?";
     params = [name, description, price, stock_quantity, category_id, req.file.filename, id];
   } else {
-   
     sql = "UPDATE products SET name=?, description=?, price=?, stock_quantity=?, category_id=? WHERE id=?";
     params = [name, description, price, stock_quantity, category_id, id];
   }
@@ -72,9 +69,7 @@ app.put("/api/products/:id", upload.single('image'), (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-  
   const q = "SELECT id, name, description, price, stock_quantity, category_id, image FROM products ORDER BY category_id ASC, name ASC";
-  
   db.query(q, (err, data) => {
     if (err) {
       console.error(" All Products Fetch Error:", err);
@@ -83,7 +78,6 @@ app.get("/api/products", (req, res) => {
     return res.status(200).json(data);
   });
 });
-
 
 app.get("/api/products/:id", (req, res) => {
   const productId = req.params.id;
@@ -101,10 +95,8 @@ app.get("/api/products/:id", (req, res) => {
   });
 });
 
-
 app.delete("/api/products/:id", (req, res) => {
   const productId = req.params.id;
-  
   const cleanId = String(productId).split(':')[0];
 
   const q = "DELETE FROM products WHERE id = ?";
@@ -146,7 +138,6 @@ app.post("/api/auth/register", async (req, res) => {
     return res.status(500).json({ error: "Server encryption error." });
   }
 });
-
 
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
@@ -192,7 +183,6 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
-
 app.post("/api/checkout", (req, res) => {
   const { user_id, total_amount, payment_method, delivery_address, items } = req.body;
 
@@ -217,7 +207,6 @@ app.post("/api/checkout", (req, res) => {
       db.query(itemsSql, [itemValues], (err) => {
         if (err) return db.rollback(() => res.status(500).json(err));
 
-        // 🔻 HERE: Update product stock quantities (Decrease by ordered quantity)
         let stockQueriesCompleted = 0;
         let hasStockError = false;
 
@@ -232,7 +221,6 @@ app.post("/api/checkout", (req, res) => {
             if (err) hasStockError = true;
             stockQueriesCompleted++;
 
-            // Sabai items ko stock update bhaye paxi matra commit garne
             if (stockQueriesCompleted === items.length) {
               if (hasStockError) {
                 return db.rollback(() => res.status(500).json({ error: "Failed to update product stock" }));
@@ -243,8 +231,10 @@ app.post("/api/checkout", (req, res) => {
 
                 if (payment_method === 'eSewa') {
                   const amountStr = Number(total_amount).toFixed(2); 
-                  const product_code = "EPAYTEST";
-                  const secret = "8gBm/:&EnhH.1/q"; 
+                  
+                 
+                  const product_code = process.env.ESEWA_PRODUCT_CODE || "EPAYTEST";
+                  const secret = process.env.ESEWA_SECRET_KEY; 
 
                   const hashString = `total_amount=${amountStr},transaction_uuid=${temporary_uuid},product_code=${product_code}`;
                   
@@ -286,7 +276,6 @@ app.post("/api/checkout", (req, res) => {
   });
 });
 
-
 app.put('/api/orders/update-status', (req, res) => {
   const { transaction_uuid, transaction_code } = req.body;
 
@@ -321,7 +310,6 @@ app.put('/api/orders/update-status', (req, res) => {
   });
 });
 
-
 app.get('/api/users/:userId/orders', (req, res) => {
   const { userId } = req.params;
   const q = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
@@ -334,9 +322,6 @@ app.get('/api/users/:userId/orders', (req, res) => {
     return res.status(200).json(data);
   });
 });
-
-
-
 
 app.get("/api/reviews", (req, res) => {
   const q = `
@@ -355,7 +340,6 @@ app.get("/api/reviews", (req, res) => {
   });
 });
 
-
 app.post("/api/reviews", (req, res) => {
   const { user_id, rating, comment } = req.body;
 
@@ -372,7 +356,6 @@ app.post("/api/reviews", (req, res) => {
     return res.status(201).json({ success: true, message: "Review posted successfully!" });
   });
 });
-
 
 app.post("/api/products/:productId/reviews", (req, res) => {
   const { productId } = req.params;
@@ -391,7 +374,6 @@ app.post("/api/products/:productId/reviews", (req, res) => {
     return res.status(201).json({ success: true, message: "Product review added successfully!" });
   });
 });
-
 
 app.get("/api/products/:productId/reviews", (req, res) => {
   const { productId } = req.params;
@@ -412,7 +394,6 @@ app.get("/api/products/:productId/reviews", (req, res) => {
   });
 });
 
-
 app.get('/api/admin/orders', (req, res) => {
   const sql = `
     SELECT 
@@ -430,7 +411,6 @@ app.get('/api/admin/orders', (req, res) => {
   
   db.query(sql, (err, data) => {
     if (err) return res.status(500).json({ success: false, error: err.message });
-   
     return res.status(200).json(data);
   });
 });
@@ -497,7 +477,6 @@ app.get('/api/admin/revenue-by-category', (req, res) => {
   });
 });
 
-
 app.get('/api/orders/:order_id/items', (req, res) => {
   const sql = `
     SELECT oi.*, p.name, p.image 
@@ -511,7 +490,6 @@ app.get('/api/orders/:order_id/items', (req, res) => {
   });
 });
 
-
 app.put('/api/orders/:order_id/cancel', (req, res) => {
   const sql = "UPDATE orders SET order_status = 'Cancelled' WHERE id = ?";
   db.query(sql, [req.params.order_id], (err, result) => {
@@ -520,6 +498,5 @@ app.put('/api/orders/:order_id/cancel', (req, res) => {
   });
 });
 
-
-const PORT = 8800;
+const PORT = process.env.PORT || 8800;
 app.listen(PORT, () => console.log(` Server on http://localhost:${PORT}`));
