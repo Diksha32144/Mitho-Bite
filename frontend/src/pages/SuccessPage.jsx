@@ -63,8 +63,7 @@ const SuccessPage = () => {
       clearCart();
     }
   }, [searchParams]);
-
-  return (
+return (
     <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-20 px-6 flex items-center justify-center font-sans">
       <div className="bg-white max-w-md w-full rounded-3xl p-8 shadow-xl border border-gray-50 text-center relative overflow-hidden">
         
@@ -76,9 +75,9 @@ const SuccessPage = () => {
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Order Confirmed!</h1>
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Payment Successful!</h1>
         <p className="text-gray-400 text-sm font-medium px-4">
-          Thank you for baking with Mitho Bite! Your artisan order has been received and is being prepared.
+          Your eSewa payment was successful! Your artisan order has been received and is being prepared.
         </p>
 
         {orderDetails && (

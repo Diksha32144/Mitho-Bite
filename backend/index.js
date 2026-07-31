@@ -217,44 +217,68 @@ app.post("/api/checkout", (req, res) => {
       db.query(itemsSql, [itemValues], (err) => {
         if (err) return db.rollback(() => res.status(500).json(err));
 
-        db.commit((err) => {
-          if (err) return db.rollback(() => res.status(500).json(err));
+        // 🔻 HERE: Update product stock quantities (Decrease by ordered quantity)
+        let stockQueriesCompleted = 0;
+        let hasStockError = false;
 
-          if (payment_method === 'eSewa') {
-            const amountStr = Number(total_amount).toFixed(2); 
-            const product_code = "EPAYTEST";
-            const secret = "8gBm/:&EnhH.1/q"; 
+        items.forEach(item => {
+          const updateStockSql = `
+            UPDATE products 
+            SET stock_quantity = GREATEST(0, stock_quantity - ?) 
+            WHERE id = ?
+          `;
+          
+          db.query(updateStockSql, [item.quantity, item.id], (err) => {
+            if (err) hasStockError = true;
+            stockQueriesCompleted++;
 
-            const hashString = `total_amount=${amountStr},transaction_uuid=${temporary_uuid},product_code=${product_code}`;
-            
-            const signature = crypto
-              .createHmac('sha256', secret)
-              .update(hashString)
-              .digest('base64');
-
-            return res.status(200).json({
-              payment_method: 'eSewa',
-              esewaConfig: {
-                amount: amountStr,
-                tax_amount: "0",
-                total_amount: amountStr,
-                transaction_uuid: temporary_uuid, 
-                product_code: product_code,
-                product_service_charge: "0",
-                product_delivery_charge: "0",
-                success_url: "http://localhost:5173/success", 
-                failure_url: "http://localhost:5173/checkout",
-                signed_field_names: "total_amount,transaction_uuid,product_code",
-                signature: signature
+            // Sabai items ko stock update bhaye paxi matra commit garne
+            if (stockQueriesCompleted === items.length) {
+              if (hasStockError) {
+                return db.rollback(() => res.status(500).json({ error: "Failed to update product stock" }));
               }
-            });
-          }
 
-          return res.status(200).json({ 
-            success: true, 
-            payment_method: 'COD',
-            message: "COD Order Placed Successfully!",
-            orderId: orderId
+              db.commit((err) => {
+                if (err) return db.rollback(() => res.status(500).json(err));
+
+                if (payment_method === 'eSewa') {
+                  const amountStr = Number(total_amount).toFixed(2); 
+                  const product_code = "EPAYTEST";
+                  const secret = "8gBm/:&EnhH.1/q"; 
+
+                  const hashString = `total_amount=${amountStr},transaction_uuid=${temporary_uuid},product_code=${product_code}`;
+                  
+                  const signature = crypto
+                    .createHmac('sha256', secret)
+                    .update(hashString)
+                    .digest('base64');
+
+                  return res.status(200).json({
+                    payment_method: 'eSewa',
+                    esewaConfig: {
+                      amount: amountStr,
+                      tax_amount: "0",
+                      total_amount: amountStr,
+                      transaction_uuid: temporary_uuid, 
+                      product_code: product_code,
+                      product_service_charge: "0",
+                      product_delivery_charge: "0",
+                      success_url: "http://localhost:5173/success", 
+                      failure_url: "http://localhost:5173/checkout",
+                      signed_field_names: "total_amount,transaction_uuid,product_code",
+                      signature: signature
+                    }
+                  });
+                }
+
+                return res.status(200).json({ 
+                  success: true, 
+                  payment_method: 'COD',
+                  message: "COD Order Placed Successfully!",
+                  orderId: orderId
+                });
+              });
+            }
           });
         });
       });

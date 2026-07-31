@@ -23,7 +23,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import OrderTracking from './pages/OrderTracking';
 
 
-import wavyBG from './assets/landing-bg.png'; 
+import wavyBG from './assets/landingproject.png'; 
 
 
 import cake1 from './assets/choco-cake.png';
@@ -83,37 +83,38 @@ function App() {
 useEffect(() => {
   axios.get('http://localhost:8800/api/products')
     .then(res => {
-      const processedData = res.data.map(item => {
+      const processedData = res.data.map((item, index) => {
         let catId = 0;
         const name = item.name.toLowerCase();
         
-        
-  if (name.includes('cookie') || name.includes('choco chip') || name.includes('oatmeal') || name.includes('peanut')) {
-    catId = 5; 
-  } 
+        if (name.includes('cookie') || name.includes('choco chip') || name.includes('oatmeal') || name.includes('peanut')) {
+          catId = 5; 
+        } else if (name.includes('cake') || name.includes('velvet') || name.includes('cheesecake')) {
+          catId = 1;
+        } else if (name.includes('donut') || name.includes('boston') || name.includes('sprinkles')) {
+          catId = 2;
+        } else if (name.includes('pastry') || name.includes('black forest') || name.includes('pineapple')) {
+          catId = 3;
+        } else if (name.includes('sorbet') || name.includes('scoop') || name.includes('belgian')) {
+          catId = 4;
+        }
 
-  else if (name.includes('cake') || name.includes('velvet') || name.includes('cheesecake')) {
-    catId = 1;
-  } 
+        // Testing ko lagi dynamic stock assignment:
+        // index 0 -> Out of Stock (0)
+        // index 1 -> Low Stock (3 left)
+        // baki sabai -> In Stock (15)
+        let dynamicStock = 15;
+        if (index === 0) dynamicStock = 0;
+        if (index === 1) dynamicStock = 3;
 
-  else if (name.includes('donut') || name.includes('boston') || name.includes('sprinkles')) {
-    catId = 2;
-  } 
-
-  else if (name.includes('pastry') || name.includes('black forest') || name.includes('pineapple')) {
-    catId = 3;
-  } 
-  else if (name.includes('sorbet') || name.includes('scoop') || name.includes('belgian')) {
-    catId = 4;
-  }
         return { 
           ...item, 
           category_id: catId,
-          image: imageLib[item.name] || 'https://via.placeholder.com/300'
+          image: imageLib[item.name] || 'https://via.placeholder.com/300',
+          stock: item.stock !== undefined && item.stock !== null ? item.stock : dynamicStock
         };
       });
 
-     
       processedData.sort((a, b) => {
         const catA = getCategoryName(a.category_id);
         const catB = getCategoryName(b.category_id);
@@ -157,9 +158,17 @@ useEffect(() => {
         <Routes>
           <Route path="/" element={
             <>
-              <div className="w-full" style={{ backgroundImage: `url(${wavyBG})`, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}>
-                <Hero />
-              </div>
+             <div 
+  className="w-full" 
+  style={{ 
+    backgroundImage: `url(${wavyBG})`, 
+    backgroundSize: 'cover',        
+    backgroundPosition: 'center',    
+    backgroundRepeat: 'no-repeat'    
+  }}
+>
+  <Hero />
+</div>
               <section id="menu" className="bg-white py-24 w-full shadow-inner">
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="flex flex-col items-center mb-16">

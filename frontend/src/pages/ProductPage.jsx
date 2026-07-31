@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
-import { useCart } from '../context/CartContext';
-import { Search, Star, ShoppingCart, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
+import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import ProductCard from '../components/ProductCard';
 
 export default function ProductPage({ products }) {
-  const { addToCart } = useCart();
   const navigate = useNavigate(); 
+  const location = useLocation();
+  
   const [searchTerm, setSearchTerm] = useState('');
   
+  const initialCategory = location.state?.selectedCategory || 'All';
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory); 
 
-  const [selectedCategory, setSelectedCategory] = useState('All'); 
-  const [addedItems, setAddedItems] = useState({});
+  useEffect(() => {
+    if (location.state?.selectedCategory) {
+      setSelectedCategory(location.state.selectedCategory);
+    }
+  }, [location.state]);
 
- const categories = [
+  const categories = [
     { name: 'All', count: products.length }, 
     { name: 'Cakes', count: products.filter(p => p.category_id === 1).length },
     { name: 'Donuts', count: products.filter(p => p.category_id === 2).length },
@@ -21,33 +27,18 @@ export default function ProductPage({ products }) {
     { name: 'Cookies', count: products.filter(p => p.category_id === 5).length },
   ];
 
-
   const filtered = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
     
-
-    const productCat = p.category?.toLowerCase().replace(/[^a-z]/g, '');
-    const selectedCat = selectedCategory.toLowerCase().replace(/[^a-z]/g, '');
-    
-
-const matchesCat = selectedCategory === 'All' || 
-  (selectedCategory === 'Cakes' && p.category_id === 1) ||
-  (selectedCategory === 'Donuts' && p.category_id === 2) ||
-  (selectedCategory === 'Pastries' && p.category_id === 3) ||
-  (selectedCategory === 'Ice Cream' && p.category_id === 4) ||
-  (selectedCategory === 'Cookies' && p.category_id === 5);
+    const matchesCat = selectedCategory === 'All' || 
+      (selectedCategory === 'Cakes' && p.category_id === 1) ||
+      (selectedCategory === 'Donuts' && p.category_id === 2) ||
+      (selectedCategory === 'Pastries' && p.category_id === 3) ||
+      (selectedCategory === 'Ice Cream' && p.category_id === 4) ||
+      (selectedCategory === 'Cookies' && p.category_id === 5);
     
     return matchesSearch && matchesCat;
   });
-
-  const handleAddToCart = (e, item) => {
-    e.stopPropagation();
-    addToCart(item);
-    setAddedItems((prev) => ({ ...prev, [item.id]: true }));
-    setTimeout(() => {
-      setAddedItems((prev) => ({ ...prev, [item.id]: false }));
-    }, 2000);
-  };
 
   return (
     <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-20">
@@ -103,43 +94,12 @@ const matchesCat = selectedCategory === 'All' ||
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filtered.map((item) => (
-                  <div 
-                    key={item.id} 
-                    onClick={() => navigate(`/product/${item.id}`)} 
-                    className="group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative cursor-pointer"
-                  >
-                    <div className="h-64 overflow-hidden bg-gray-100">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    </div>
-                    
-                    <div className="p-7">
-                      <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">{item.category}</span>
-                      <h3 className="text-lg font-bold text-gray-800 mt-1 mb-2 leading-tight">{item.name}</h3>
-                      
-                      <div className="flex items-center gap-1 mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={12} className={i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-200"} />
-                        ))}
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-xl font-black text-gray-900">Rs. {item.price}</span>
-                        <button 
-                          onClick={(e) => handleAddToCart(e, item)} 
-                          className={`p-3 rounded-2xl transition-all duration-300 shadow-lg ${
-                            addedItems[item.id] ? 'bg-[#00D084] text-white scale-110' : 'bg-[#432818] text-white hover:bg-black'
-                          }`}
-                        >
-                          {addedItems[item.id] ? <Check size={20} /> : <ShoppingCart size={20} />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <ProductCard key={item.id} item={item} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-                <p className="text-gray-400">No products found. Check your backend connection!</p>
+                <p className="text-gray-400">No products found in this category.</p>
               </div>
             )}
           </main>

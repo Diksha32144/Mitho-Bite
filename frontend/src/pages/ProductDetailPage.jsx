@@ -39,7 +39,7 @@ export default function ProductDetailPage({ imageLib }) {
     <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-12">
         
-      
+        {/* Left: Image & Back Button */}
         <div className="space-y-4">
           <button 
             onClick={() => navigate(-1)} 
@@ -47,16 +47,33 @@ export default function ProductDetailPage({ imageLib }) {
           >
             <ArrowLeft size={16} /> Back to Catalog
           </button>
-          <div className="h-[400px] rounded-[2rem] overflow-hidden bg-rose-50/20 border border-gray-100 flex items-center justify-center">
+          <div className="h-[400px] rounded-[2rem] overflow-hidden bg-rose-50/20 border border-gray-100 flex items-center justify-center relative">
             <img 
               src={product.image} 
               alt={product.name} 
               className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" 
             />
+
+            {/* 🌟 Stock Status Badge on Image */}
+            <div className="absolute top-4 left-4">
+              {product.stock_quantity === 0 ? (
+                <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-md">
+                  Out of Stock
+                </span>
+              ) : product.stock_quantity <= 5 ? (
+                <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-md">
+                  Low Stock ({product.stock_quantity} left)
+                </span>
+              ) : (
+                <span className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full shadow-md">
+                  In Stock ({product.stock_quantity} units)
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-     
+        {/* Right: Details, Price, Quantity & Add to Cart */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
             <span className="text-xs font-black uppercase tracking-widest text-[#E94E77]">{product.category || 'Bakery Treats'}</span>
@@ -74,12 +91,11 @@ export default function ProductDetailPage({ imageLib }) {
           <div className="border-y border-gray-100 py-4 flex justify-between items-center">
             <div>
               <span className="text-xs text-gray-400 font-bold block uppercase">Total Cost</span>
-            
               <span className="text-3xl font-black text-[#432818]">Rs. {product.price * quantity}</span>
             </div>
-
         
-            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            {/* Quantity Selector - Disabled if Out of Stock */}
+            <div className={`flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50 ${product.stock_quantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
               <button 
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                 className="px-3 py-2 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
@@ -88,7 +104,7 @@ export default function ProductDetailPage({ imageLib }) {
               </button>
               <span className="px-4 font-bold text-sm text-gray-700 select-none">{quantity}</span>
               <button 
-                onClick={() => setQuantity(q => q + 1)}
+                onClick={() => setQuantity(q => Math.min(product.stock_quantity, q + 1))}
                 className="px-3 py-2 font-bold hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 +
@@ -96,24 +112,28 @@ export default function ProductDetailPage({ imageLib }) {
             </div>
           </div>
 
-          
+          {/* Add to Cart Button - Disabled when Out of Stock */}
           <button 
             onClick={() => {
-             
-              addToCart({ ...product, quantity });
-              navigate('/cart');
+              if (product.stock_quantity > 0) {
+                addToCart({ ...product, quantity });
+                navigate('/cart');
+              }
             }}
-            className="w-full bg-[#432818] hover:bg-black text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all transform hover:scale-[1.01] cursor-pointer"
+            disabled={product.stock_quantity === 0}
+            className={`w-full font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all ${
+              product.stock_quantity === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
+                : 'bg-[#432818] hover:bg-black text-white transform hover:scale-[1.01] cursor-pointer'
+            }`}
           >
             <ShoppingCart size={18} />
-            <span>Add Items & Go to Cart</span>
+            <span>{product.stock_quantity === 0 ? 'Out of Stock' : 'Add Items & Go to Cart'}</span>
           </button>
         </div>
       </div>
       
-    
       <ProductReviews productId={id} />
-
     </div>
   );
 }

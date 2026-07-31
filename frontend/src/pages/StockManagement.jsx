@@ -73,11 +73,11 @@ export default function StockManagement() {
             {products.map((product) => (
               <tr key={product.id} className="hover:bg-gray-50/70 transition-colors">
                 <td className="p-4 font-semibold text-gray-800">{product.name}</td>
-                <td className="p-4 text-center font-bold text-gray-700">
-                  <span className={`px-3 py-1 rounded text-xs ${product.stock_quantity < 5 ? 'bg-red-100 text-red-700' : 'bg-gray-100'}`}>
-                    {product.stock_quantity ?? 0} Units
-                  </span>
-                </td>
+               <td className="p-4 text-center font-bold text-gray-700">
+  <span className={`px-3 py-1 rounded text-xs ${product.stock_quantity <= 5 ? 'bg-red-100 text-red-700' : 'bg-gray-100'}`}>
+    {product.stock_quantity ?? 0} Units
+  </span>
+</td>
                 <td className="p-4">
                   <div className="flex justify-center items-center gap-2">
                     <button onClick={() => adjustStock(product, -5)} className="bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-xs font-bold">-5</button>
